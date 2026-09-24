@@ -6,6 +6,7 @@ import type { ScanStage } from './analysis-service'
 import { fixtureAnalysisService } from './fixture-analysis-service'
 import { ScanView } from './scan-view'
 import { SetupWizard } from './setup-wizard'
+import { ResultsView } from './results-view'
 import { copy, type Locale } from '@/lib/copy'
 
 type ExperienceState =
@@ -38,15 +39,7 @@ export function AnalysisExperience({ locale }: AnalysisExperienceProps) {
 
   if (state.status === 'setup') return <SetupWizard locale={locale} onComplete={run} />
   if (state.status === 'scanning') return <ScanView locale={locale} stage={state.stage} />
-  if (state.status === 'complete') {
-    return (
-      <section className="result-preview" aria-labelledby="result-preview-title">
-        <p className="eyebrow">{text.scan.fixtureNotice}</p>
-        <h1 id="result-preview-title">{text.scan.completeTitle}</h1>
-        <p className="numeric">{state.result.primary.symbol} · Phanfora Skoru {state.result.primary.totalScore} / 100</p>
-      </section>
-    )
-  }
+  if (state.status === 'complete') return <ResultsView result={state.result} locale={locale} />
 
   return (
     <section className="error-panel" role="alert">
