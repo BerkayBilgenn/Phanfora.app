@@ -14,28 +14,57 @@ import {
 } from '@phanfora/contracts';
 import type { AnalysisResult } from '@phanfora/domain';
 import {
-  FixtureFxRateProvider,
-  FixtureMarketDataProvider,
+  MarketDataError,
+  type FxRateProvider,
+  type MarketDataProvider,
 } from '@phanfora/market-data';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   allowedOrigins?: readonly string[];
+  marketData?: MarketDataProvider;
+  fxRates?: FxRateProvider;
+  providerMode?: 'fixture' | 'live';
+}
+
+function marketDataNotConfigured(): never {
+  throw new MarketDataError('MARKET_DATA_NOT_CONFIGURED');
+}
+
+class UnconfiguredMarketDataProvider implements MarketDataProvider {
+  async listAssets() { return marketDataNotConfigured(); }
+  async getCandidates() { return marketDataNotConfigured(); }
+  async getAsset() { return marketDataNotConfigured(); }
+}
+
+class UnconfiguredFxRateProvider implements FxRateProvider {
+  async listCurrencies() { return marketDataNotConfigured(); }
+  async getRates() { return marketDataNotConfigured(); }
 }
 
 export function buildApp(options: BuildAppOptions = {}) {
-  const { allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'], ...fastifyOptions } = options;
+  const {
+    allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    marketData = new UnconfiguredMarketDataProvider(),
+    fxRates = new UnconfiguredFxRateProvider(),
+    providerMode = 'live',
+    ...fastifyOptions
+  } = options;
+  const providerConfigured = options.marketData !== undefined && options.fxRates !== undefined;
   const app = Fastify({
     bodyLimit: 32 * 1024,
     logger: fastifyOptions.logger ?? {
       level: 'info',
-      redact: ['req.headers.authorization', 'req.headers.cookie', 'body.amount'],
+      redact: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'body.amount',
+        'TWELVE_DATA_API_KEY',
+      ],
     },
     ...fastifyOptions,
   }).withTypeProvider<TypeBoxTypeProvider>();
 
-  const marketData = new FixtureMarketDataProvider();
-  const fxRates = new FixtureFxRateProvider();
   const idempotencyStore = new Map<string, AnalysisResult>();
   const replayedKeys = new Set<string>();
   const analysis = new AnalysisService({
@@ -54,17 +83,24 @@ export function buildApp(options: BuildAppOptions = {}) {
     },
   });
 
-  app.get('/health', async () => ({ status: 'ok', dataMode: 'fixture' }));
+  app.get('/health', async () => providerConfigured
+    ? { status: 'ok', dataMode: providerMode, provider: providerMode === 'live' ? 'Twelve Data' : 'Fixture' }
+    : {
+        status: 'degraded',
+        dataMode: providerMode,
+        provider: 'Twelve Data',
+        error: 'MARKET_DATA_NOT_CONFIGURED',
+      });
 
   app.get('/v1/currencies', async (request) => {
     const query = request.query as { locale?: string };
     const locale = query.locale === 'en-US' ? 'en-US' : 'tr-TR';
-    return { items: await fxRates.listCurrencies(locale), dataMode: 'fixture' };
+    return { items: await fxRates.listCurrencies(locale), dataMode: providerMode };
   });
 
   app.get('/v1/assets', async () => ({
     items: await marketData.listAssets(),
-    dataMode: 'fixture',
+    dataMode: providerMode,
   }));
 
   app.post<{
@@ -100,20 +136,32 @@ export function buildApp(options: BuildAppOptions = {}) {
 
   app.setErrorHandler((error, _request, reply) => {
     const appError = error as Error & { statusCode?: number; validation?: unknown };
-    const statusCode = appError.statusCode && appError.statusCode >= 400
+    const marketCode = appError instanceof MarketDataError ? appError.code : null;
+    const statusCode = marketCode === 'MARKET_DATA_NOT_CONFIGURED'
+      || marketCode === 'MARKET_DATA_RATE_LIMITED'
+      ? 503
+      : marketCode === 'MARKET_DATA_UNAVAILABLE' || marketCode === 'FX_RATE_UNAVAILABLE'
+        ? 502
+        : appError.statusCode && appError.statusCode >= 400
       ? appError.statusCode
       : appError.message === 'ORIGIN_NOT_ALLOWED'
         ? 403
         : 500;
-    const code = appError.validation
+    const code = marketCode ?? (appError.validation
       ? 'VALIDATION_ERROR'
       : statusCode === 415
         ? 'UNSUPPORTED_MEDIA_TYPE'
         : statusCode === 403
           ? 'ORIGIN_NOT_ALLOWED'
-          : 'INTERNAL_ERROR';
-    const message = statusCode >= 500
-      ? 'İstek şu anda tamamlanamadı.'
+          : 'INTERNAL_ERROR');
+    const message = marketCode === 'MARKET_DATA_RATE_LIMITED'
+      ? 'Canlı veri kotası dolu. Kısa süre sonra yeniden dene.'
+      : marketCode === 'MARKET_DATA_NOT_CONFIGURED'
+        ? 'Canlı piyasa verisi henüz yapılandırılmadı.'
+        : marketCode === 'FX_RATE_UNAVAILABLE'
+          ? 'Seçilen para birimi için canlı kur alınamadı.'
+          : statusCode >= 500
+            ? 'Canlı piyasa verisi şu anda alınamadı.'
       : 'İstek doğrulanamadı.';
     return reply.code(statusCode).send({ error: { code, message } });
   });

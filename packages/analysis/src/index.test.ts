@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import type { FxRateProvider, MarketDataProvider } from '@phanfora/market-data';
 import { FixtureFxRateProvider, FixtureMarketDataProvider } from '@phanfora/market-data';
 
 import { AnalysisService } from './index';
@@ -58,5 +59,43 @@ describe('analysis orchestration', () => {
       assetId: 'crypto:micro-usd',
       reason: 'LOW_LIQUIDITY',
     });
+  });
+
+  it('requests only the selected currency rate and derives live result mode', async () => {
+    const fixtureMarket = new FixtureMarketDataProvider();
+    const fixtureFx = new FixtureFxRateProvider();
+    const marketData: MarketDataProvider = {
+      listAssets: () => fixtureMarket.listAssets(),
+      getAsset: (id) => fixtureMarket.getAsset(id),
+      getCandidates: async (horizon) => (await fixtureMarket.getCandidates(horizon)).map(
+        (candidate) => Object.freeze({
+          ...candidate,
+          quality: Object.freeze({ ...candidate.quality, freshness: 'live' as const }),
+          dataMode: 'live' as const,
+        }),
+      ),
+    };
+    const getRates = vi.fn<FxRateProvider['getRates']>(async (base, quotes) => {
+      const snapshot = await fixtureFx.getRates(base);
+      return Object.freeze({
+        ...snapshot,
+        rates: snapshot.rates,
+        freshness: 'live' as const,
+        dataMode: 'live' as const,
+      });
+    });
+    const analysis = new AnalysisService({
+      marketData,
+      fxRates: { listCurrencies: (locale) => fixtureFx.listCurrencies(locale), getRates },
+      clock: () => '2026-09-24T09:01:00.000Z',
+      createId: () => 'live-analysis',
+      idempotencyStore: new Map(),
+    });
+
+    const result = await analysis.create(input, 'live-request');
+
+    expect(getRates).toHaveBeenCalledWith('USD', ['TRY']);
+    expect(result.dataMode).toBe('live');
+    expect(result.primary.dataMode).toBe('live');
   });
 });

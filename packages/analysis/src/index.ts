@@ -25,7 +25,7 @@ export class AnalysisService {
 
     const [candidates, fxSnapshot] = await Promise.all([
       this.dependencies.marketData.getCandidates(input.horizon),
-      this.dependencies.fxRates.getRates('USD'),
+      this.dependencies.fxRates.getRates('USD', [input.amount.currency]),
     ]);
     const calculatedAt = this.dependencies.clock();
     const accepted: ScoreResult[] = [];
@@ -66,7 +66,7 @@ export class AnalysisService {
       methodologyVersion: 'phanfora-v1',
       dataSnapshotId: `analysis:${primary.dataSnapshotId}:${fxSnapshot.id}`,
       calculatedAt,
-      dataMode: 'fixture',
+      dataMode: primary.dataMode,
       fxSnapshot,
     });
 

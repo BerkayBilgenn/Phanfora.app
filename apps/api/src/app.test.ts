@@ -1,12 +1,24 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import type { FxRateProvider, MarketDataProvider } from '@phanfora/market-data';
+import {
+  FixtureFxRateProvider,
+  FixtureMarketDataProvider,
+  MarketDataError,
+} from '@phanfora/market-data';
+
 import { buildApp } from './app';
 
 const apps: ReturnType<typeof buildApp>[] = [];
 afterEach(async () => Promise.all(apps.splice(0).map((app) => app.close())));
 
 function app() {
-  const instance = buildApp({ logger: false });
+  const instance = buildApp({
+    logger: false,
+    marketData: new FixtureMarketDataProvider(),
+    fxRates: new FixtureFxRateProvider(),
+    providerMode: 'fixture',
+  });
   apps.push(instance);
   return instance;
 }
@@ -23,7 +35,9 @@ describe('Phanfora API', () => {
   it('reports process and fixture-provider health', async () => {
     const response = await app().inject({ method: 'GET', url: '/health' });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ status: 'ok', dataMode: 'fixture' });
+    expect(response.json()).toEqual({
+      status: 'ok', dataMode: 'fixture', provider: 'Fixture',
+    });
   });
 
   it('returns the localized currency catalog', async () => {
@@ -76,5 +90,49 @@ describe('Phanfora API', () => {
       payload: JSON.stringify(validBody),
     });
     expect(response.statusCode).toBe(415);
+  });
+
+  it('reports degraded health and refuses analysis without a configured provider', async () => {
+    const instance = buildApp({ logger: false });
+    apps.push(instance);
+
+    const health = await instance.inject({ method: 'GET', url: '/health' });
+    const analysis = await instance.inject({
+      method: 'POST', url: '/v1/analyses',
+      headers: { 'content-type': 'application/json', 'idempotency-key': 'missing-provider' },
+      payload: validBody,
+    });
+
+    expect(health.json()).toMatchObject({
+      status: 'degraded', error: 'MARKET_DATA_NOT_CONFIGURED',
+    });
+    expect(analysis.statusCode).toBe(503);
+    expect(analysis.json().error.code).toBe('MARKET_DATA_NOT_CONFIGURED');
+  });
+
+  it('maps provider rate limits to a sanitized retryable response', async () => {
+    const fixtureMarket = new FixtureMarketDataProvider();
+    const marketData: MarketDataProvider = {
+      listAssets: () => fixtureMarket.listAssets(),
+      getAsset: (id) => fixtureMarket.getAsset(id),
+      getCandidates: async () => { throw new MarketDataError('MARKET_DATA_RATE_LIMITED'); },
+    };
+    const fxRates: FxRateProvider = new FixtureFxRateProvider();
+    const instance = buildApp({ logger: false, marketData, fxRates, providerMode: 'live' });
+    apps.push(instance);
+
+    const response = await instance.inject({
+      method: 'POST', url: '/v1/analyses',
+      headers: { 'content-type': 'application/json', 'idempotency-key': 'rate-limited' },
+      payload: validBody,
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({
+      error: {
+        code: 'MARKET_DATA_RATE_LIMITED',
+        message: 'Canlı veri kotası dolu. Kısa süre sonra yeniden dene.',
+      },
+    });
   });
 });
