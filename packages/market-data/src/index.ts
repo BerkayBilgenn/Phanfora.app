@@ -15,8 +15,10 @@ export interface MarketDataProvider {
 
 export interface FxRateProvider {
   listCurrencies(locale: string): Promise<readonly CurrencyDefinition[]>;
-  getRates(baseCurrency: string): Promise<FxRateSnapshot>;
+  getRates(baseCurrency: string, quoteCurrencies?: readonly string[]): Promise<FxRateSnapshot>;
 }
+
+export { MarketDataError, TwelveDataProvider } from './twelve-data';
 
 const assets = Object.freeze([
   { id: 'crypto:btc-usd', symbol: 'BTC', name: 'Bitcoin', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high' },
