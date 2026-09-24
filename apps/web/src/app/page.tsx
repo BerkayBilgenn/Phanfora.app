@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import type { AnalysisInput, AnalysisResult, CurrencyDefinition } from '@phanfora/domain';
 
 import { AnalysisWizard } from '@/components/analysis-wizard';
+import { AnalysisResults } from '@/components/analysis-results';
+import { ScanProgress } from '@/components/scan-progress';
 import { createAnalysis, fetchCurrencies } from '@/lib/api';
 
 export default function TodayPage() {
@@ -35,9 +37,8 @@ export default function TodayPage() {
     }
   }
 
-  if (result) {
-    return <div className="temporary-result"><p className="eyebrow">Analiz tamamlandı</p><h1>{result.primary.asset.name}</h1><button type="button" onClick={() => setResult(null)}>Yeni analiz</button></div>;
-  }
+  if (result) return <AnalysisResults result={result} onReset={() => setResult(null)} />;
+  if (busy) return <ScanProgress />;
 
   return (
     <div className="today-layout">
