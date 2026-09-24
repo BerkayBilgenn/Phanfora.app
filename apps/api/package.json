@@ -1,0 +1,23 @@
+{
+  "name": "@phanfora/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.0",
+    "@fastify/helmet": "^13.0.0",
+    "@fastify/type-provider-typebox": "^6.0.0",
+    "@phanfora/analysis": "workspace:*",
+    "@phanfora/contracts": "workspace:*",
+    "@phanfora/domain": "workspace:*",
+    "@phanfora/market-data": "workspace:*",
+    "fastify": "^5.6.0"
+  }
+}
