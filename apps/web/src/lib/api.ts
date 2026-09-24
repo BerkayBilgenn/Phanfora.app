@@ -1,0 +1,37 @@
+import type { AnalysisInput, AnalysisResult, CurrencyDefinition } from '@phanfora/domain';
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:4000';
+
+async function expectJson<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+    throw new Error(body?.error?.message ?? 'Piyasa analizi tamamlanamadı.');
+  }
+  return response.json() as Promise<T>;
+}
+
+export async function fetchCurrencies(): Promise<CurrencyDefinition[]> {
+  const response = await fetch(`${apiUrl}/v1/currencies?locale=tr-TR`, {
+    cache: 'no-store',
+  });
+  const body = await expectJson<{ items: CurrencyDefinition[] }>(response);
+  return body.items;
+}
+
+export async function createAnalysis(input: AnalysisInput): Promise<AnalysisResult> {
+  const response = await fetch(`${apiUrl}/v1/analyses`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'idempotency-key': crypto.randomUUID(),
+    },
+    body: JSON.stringify({
+      amount: input.amount.amount,
+      currency: input.amount.currency,
+      horizon: input.horizon,
+      riskProfile: input.riskProfile,
+      locale: input.locale,
+    }),
+  });
+  return expectJson<AnalysisResult>(response);
+}
