@@ -81,6 +81,24 @@ importers:
         specifier: ^5.6.0
         version: 5.12.5
 
+  apps/worker:
+    dependencies:
+      '@phanfora/analysis':
+        specifier: workspace:*
+        version: link:../../packages/analysis
+      '@phanfora/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@phanfora/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@phanfora/market-data':
+        specifier: workspace:*
+        version: link:../../packages/market-data
+      '@sinclair/typebox':
+        specifier: ^0.34.0
+        version: 0.34.52
+
   packages/analysis:
     dependencies:
       '@phanfora/currency':
