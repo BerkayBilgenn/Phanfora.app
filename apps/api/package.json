@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "API_PORT=4300 ALLOWED_ORIGINS=http://localhost:3300,http://127.0.0.1:3300 tsx watch src/server.ts",
+    "dev:e2e": "pnpm dev",
     "start": "tsx src/server.ts",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",

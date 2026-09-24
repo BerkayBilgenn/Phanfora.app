@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"pnpm --filter @phanfora/api dev\" \"pnpm --filter @phanfora/web dev\"",
+    "dev:e2e": "concurrently -k -n api,web -c blue,green \"pnpm --filter @phanfora/api dev:e2e\" \"pnpm --filter @phanfora/web dev:e2e\"",
     "dev:worker": "pnpm --filter @phanfora/worker dev",
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",

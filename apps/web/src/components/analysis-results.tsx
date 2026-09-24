@@ -70,7 +70,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
               <h3>Neden öne çıkıyor?</h3>
               <ul>{primary.reasons.slice(0, 3).map((reason) => <li key={reason}>{copy.reasons[reason as keyof typeof copy.reasons]}</li>)}</ul>
             </div>
-            <div className="risk-note"><span>Ana risk</span><p>{copy.risks[primary.primaryRisk as keyof typeof copy.risks]}</p></div>
+            <section className="risk-note" aria-labelledby="primary-risk-title"><span id="primary-risk-title">Ana risk</span><p>{copy.risks[primary.primaryRisk as keyof typeof copy.risks]}</p></section>
           </div>
           <ScoreBreakdown result={primary} />
         </article>
