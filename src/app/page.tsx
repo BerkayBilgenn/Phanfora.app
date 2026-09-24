@@ -1,10 +1,10 @@
 import { AppShell } from '@/components/app-shell'
-import { SetupWizard } from '@/features/analysis/setup-wizard'
+import { AnalysisExperience } from '@/features/analysis/analysis-experience'
 
 export default function HomePage() {
   return (
     <AppShell>
-      <SetupWizard locale="tr-TR" />
+      <AnalysisExperience locale="tr-TR" />
     </AppShell>
   )
 }

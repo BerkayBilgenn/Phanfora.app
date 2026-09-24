@@ -23,6 +23,18 @@ type Copy = {
     horizons: Record<'daily' | 'weekly' | 'monthly', string>
     risks: Record<'low' | 'balanced' | 'high', string>
   }
+  scan: {
+    eyebrow: string
+    title: string
+    body: string
+    fixtureNotice: string
+    completeTitle: string
+    errorTitle: string
+    error: string
+    retry: string
+    edit: string
+    stages: Record<'updating' | 'filtering' | 'risk' | 'ranking', string>
+  }
 }
 
 const tr: Copy = {
@@ -52,6 +64,23 @@ const tr: Copy = {
     horizons: { daily: 'Günlük', weekly: 'Haftalık', monthly: 'Aylık' },
     risks: { low: 'Düşük', balanced: 'Dengeli', high: 'Yüksek' },
   },
+  scan: {
+    eyebrow: 'Deterministik analiz',
+    title: 'Piyasalar taranıyor',
+    body: 'Her adım gerçek fixture verisi üzerinde tamamlandığında işaretlenir.',
+    fixtureNotice: 'Demo verisi',
+    completeTitle: 'Öne çıkan fırsat',
+    errorTitle: 'Analiz tamamlanamadı',
+    error: 'Güvenilir üç sonuç üretilemedi. Seçimlerin korundu; yeniden deneyebilirsin.',
+    retry: 'Yeniden dene',
+    edit: 'Seçimleri düzenle',
+    stages: {
+      updating: 'Piyasalar güncelleniyor',
+      filtering: 'Varlıklar filtreleniyor',
+      risk: 'Risk uyumu hesaplanıyor',
+      ranking: 'Sonuçlar sıralanıyor',
+    },
+  },
 }
 
 const en: Copy = {
@@ -80,6 +109,23 @@ const en: Copy = {
     riskSummary: 'Risk',
     horizons: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' },
     risks: { low: 'Low', balanced: 'Balanced', high: 'High' },
+  },
+  scan: {
+    eyebrow: 'Deterministic analysis',
+    title: 'Scanning markets',
+    body: 'Each stage is marked only after it completes against fixture data.',
+    fixtureNotice: 'Demo data',
+    completeTitle: 'Featured opportunity',
+    errorTitle: 'Analysis could not be completed',
+    error: 'Three reliable results could not be produced. Your choices are saved; you can try again.',
+    retry: 'Try again',
+    edit: 'Edit choices',
+    stages: {
+      updating: 'Updating markets',
+      filtering: 'Filtering assets',
+      risk: 'Calculating risk fit',
+      ranking: 'Ranking results',
+    },
   },
 }
 
