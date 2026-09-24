@@ -1,0 +1,10 @@
+.worktrees/
+.superpowers/
+node_modules/
+.next/
+coverage/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.DS_Store
