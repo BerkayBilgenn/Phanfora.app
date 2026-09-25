@@ -3,6 +3,8 @@ export type Locale = 'tr-TR' | 'en-US'
 type Copy = {
   skip: string
   navLabel: string
+  languageLabel: string
+  languages: { tr: string; en: string }
   nav: { today: string; explore: string; watch: string; history: string }
   hero: { eyebrow: string; title: string; body: string }
   setup: {
@@ -83,6 +85,8 @@ type Copy = {
 const tr: Copy = {
   skip: 'İçeriğe geç',
   navLabel: 'Ana navigasyon',
+  languageLabel: 'Dil',
+  languages: { tr: 'Türkçe', en: 'English' },
   nav: { today: 'Bugün', explore: 'Keşfet', watch: 'İzleme', history: 'Geçmiş' },
   hero: {
     eyebrow: 'Küresel piyasa analizi',
@@ -177,6 +181,8 @@ const tr: Copy = {
 const en: Copy = {
   skip: 'Skip to content',
   navLabel: 'Primary navigation',
+  languageLabel: 'Language',
+  languages: { tr: 'Türkçe', en: 'English' },
   nav: { today: 'Today', explore: 'Explore', watch: 'Watchlist', history: 'History' },
   hero: {
     eyebrow: 'Global market analysis',

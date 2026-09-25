@@ -8,6 +8,7 @@ import { SkipLink } from './skip-link'
 type AppShellProps = {
   children: ReactNode
   locale?: Locale
+  controls?: ReactNode
 }
 
 const navItems = [
@@ -17,7 +18,7 @@ const navItems = [
   { key: 'history', icon: Clock3, active: false },
 ] as const
 
-export function AppShell({ children, locale = 'tr-TR' }: AppShellProps) {
+export function AppShell({ children, locale = 'tr-TR', controls }: AppShellProps) {
   const text = copy[locale]
 
   return (
@@ -25,6 +26,7 @@ export function AppShell({ children, locale = 'tr-TR' }: AppShellProps) {
       <SkipLink label={text.skip} />
       <header className="app-header">
         <BrandMark />
+        {controls}
       </header>
       <nav className="app-nav" aria-label={text.navLabel}>
         <ul className="nav-list">

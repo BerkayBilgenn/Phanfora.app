@@ -137,7 +137,7 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
         )}
 
         {state.step === 'risk' && (
-          <form onSubmit={advance}>
+          <form onSubmit={complete}>
             <fieldset>
               <legend>{text.riskTitle}</legend>
               <div className="choice-grid">
@@ -148,10 +148,7 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
                       name="risk"
                       value={value}
                       checked={state.input.riskProfile === value}
-                      onChange={() => {
-                        dispatch({ type: 'risk', riskProfile: value })
-                        dispatch({ type: 'next' })
-                      }}
+                      onChange={() => dispatch({ type: 'risk', riskProfile: value })}
                     />
                     <span>{text.risks[value]}</span>
                   </label>
@@ -160,6 +157,7 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
             </fieldset>
             <div className="setup-actions">
               <button className="secondary-button" type="button" onClick={() => dispatch({ type: 'back' })}>{text.back}</button>
+              <button className="primary-button" type="submit" disabled={!state.input.riskProfile}>{text.scan}</button>
             </div>
           </form>
         )}
