@@ -1,23 +1,29 @@
 'use client'
 
-import { useReducer, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useReducer, useRef, useState, type FormEvent } from 'react'
 import { analysisInputSchema, type AnalysisInput } from './analysis-contract'
 import { initialSetupState, setupReducer } from './setup-reducer'
-import { normalizeLocalizedAmount } from '@/lib/format'
+import { formatMoney, normalizeLocalizedAmount } from '@/lib/format'
 import { copy, type Locale } from '@/lib/copy'
 
 type SetupWizardProps = {
   locale: Locale
+  initialInput?: AnalysisInput
   onComplete?: (input: AnalysisInput) => void
 }
 
 const horizonValues: AnalysisInput['horizon'][] = ['daily', 'weekly', 'monthly']
 const riskValues: AnalysisInput['riskProfile'][] = ['low', 'balanced', 'high']
 
-export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizardProps) {
-  const [state, dispatch] = useReducer(setupReducer, initialSetupState)
-  const [rawAmount, setRawAmount] = useState('')
+export function SetupWizard({ locale, initialInput, onComplete = () => undefined }: SetupWizardProps) {
+  const [state, dispatch] = useReducer(setupReducer, initialInput
+    ? { ...initialSetupState, input: initialInput }
+    : initialSetupState)
+  const [rawAmount, setRawAmount] = useState(initialInput?.amount ?? '')
   const amountRef = useRef<HTMLInputElement>(null)
+  const horizonRef = useRef<HTMLFieldSetElement>(null)
+  const riskRef = useRef<HTMLFieldSetElement>(null)
+  const didMount = useRef(false)
   const text = copy[locale].setup
   const progress = state.step === 'amount' ? '1 / 3' : state.step === 'horizon' ? '2 / 3' : '3 / 3'
   const amountIsValid = /^(?!0+(?:\.0+)?$)\d+(?:\.\d{1,2})?$/.test(state.input.amount ?? '')
@@ -25,6 +31,15 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
     (state.step === 'amount' && amountIsValid) ||
     (state.step === 'horizon' && Boolean(state.input.horizon)) ||
     (state.step === 'risk' && Boolean(state.input.riskProfile))
+
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true
+      return
+    }
+    const target = state.step === 'amount' ? amountRef.current : state.step === 'horizon' ? horizonRef.current : riskRef.current
+    target?.focus()
+  }, [state.step])
 
   function updateAmount(value: string, currency = state.input.currency ?? 'USD') {
     setRawAmount(value)
@@ -112,7 +127,7 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
 
         {state.step === 'horizon' && (
           <form onSubmit={advance}>
-            <fieldset>
+            <fieldset ref={horizonRef} tabIndex={-1}>
               <legend>{text.horizonTitle}</legend>
               <div className="choice-grid">
                 {horizonValues.map((value) => (
@@ -138,7 +153,7 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
 
         {state.step === 'risk' && (
           <form onSubmit={complete}>
-            <fieldset>
+            <fieldset ref={riskRef} tabIndex={-1}>
               <legend>{text.riskTitle}</legend>
               <div className="choice-grid">
                 {riskValues.map((value) => (
@@ -155,6 +170,14 @@ export function SetupWizard({ locale, onComplete = () => undefined }: SetupWizar
                 ))}
               </div>
             </fieldset>
+            <div className="inline-summary" aria-labelledby="inline-summary-title">
+              <h2 id="inline-summary-title">{text.summaryTitle}</h2>
+              <dl className="summary-list">
+                <div><dt>{text.amountSummary}</dt><dd className="numeric">{state.input.amount && state.input.currency ? formatMoney(Number(state.input.amount), state.input.currency, locale) : ''}</dd></div>
+                <div><dt>{text.horizonSummary}</dt><dd>{state.input.horizon ? text.horizons[state.input.horizon] : ''}</dd></div>
+                <div><dt>{text.riskSummary}</dt><dd>{state.input.riskProfile ? text.risks[state.input.riskProfile] : '—'}</dd></div>
+              </dl>
+            </div>
             <div className="setup-actions">
               <button className="secondary-button" type="button" onClick={() => dispatch({ type: 'back' })}>{text.back}</button>
               <button className="primary-button" type="submit" disabled={!state.input.riskProfile}>{text.scan}</button>

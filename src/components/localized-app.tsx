@@ -1,6 +1,6 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { AnalysisExperience } from '@/features/analysis/analysis-experience'
 import { copy, type Locale } from '@/lib/copy'
 import { AppShell } from './app-shell'
@@ -25,6 +25,10 @@ function subscribeToLocale(onStoreChange: () => void) {
 export function LocalizedApp() {
   const locale = useSyncExternalStore(subscribeToLocale, getLocaleSnapshot, getServerLocaleSnapshot)
 
+  useEffect(() => {
+    document.documentElement.lang = locale === 'tr-TR' ? 'tr' : 'en'
+  }, [locale])
+
   function selectLocale(nextLocale: Locale) {
     sessionStorage.setItem(storageKey, nextLocale)
     window.dispatchEvent(new Event(localeChangeEvent))
@@ -40,7 +44,7 @@ export function LocalizedApp() {
 
   return (
     <AppShell locale={locale} controls={localeControl}>
-      <AnalysisExperience key={locale} locale={locale} />
+      <AnalysisExperience locale={locale} />
     </AppShell>
   )
 }

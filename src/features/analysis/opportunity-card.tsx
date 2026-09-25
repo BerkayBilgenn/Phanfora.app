@@ -1,4 +1,6 @@
-import Link from 'next/link'
+'use client'
+
+import { useState } from 'react'
 import type { Opportunity } from './analysis-contract'
 import { PriceLineChart } from './price-line-chart'
 import { ScoreBreakdown } from './score-breakdown'
@@ -12,6 +14,7 @@ type OpportunityCardProps = {
 }
 
 export function OpportunityCard({ opportunity, locale, emphasis }: OpportunityCardProps) {
+  const [breakdownOpen, setBreakdownOpen] = useState(false)
   const text = copy[locale].results
   const narrative = text.assetNarratives[opportunity.assetId]
   const reasons = narrative?.reasons ?? opportunity.reasons
@@ -44,12 +47,19 @@ export function OpportunityCard({ opportunity, locale, emphasis }: OpportunityCa
       </section>
       <p className="risk-note"><strong>{text.riskLabel}:</strong> {risk}</p>
       <div className="data-status">
-        <span>{text.demoData}</span>
+        <span>{text.demoData} · {text.freshness[opportunity.quality.freshness]}</span>
         <time className="numeric" dateTime={opportunity.observedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(opportunity.observedAt))} UTC</time>
       </div>
-      <ScoreBreakdown opportunity={opportunity} locale={locale} />
+      <ScoreBreakdown opportunity={opportunity} locale={locale} open={breakdownOpen} onToggle={setBreakdownOpen} />
       <div className="card-actions">
-        <Link className="primary-button action-link" href="/analysis">{text.inspect}</Link>
+        <button
+          className="primary-button action-link"
+          type="button"
+          onClick={() => {
+            setBreakdownOpen(true)
+            requestAnimationFrame(() => document.getElementById(`score-summary-${opportunity.assetId}`)?.focus())
+          }}
+        >{text.inspect}</button>
         <button className="secondary-button" type="button" disabled aria-describedby={disabledDescriptionId}>{text.watch}</button>
         <span className="visually-hidden" id={disabledDescriptionId}>{text.watchDisabled}</span>
       </div>

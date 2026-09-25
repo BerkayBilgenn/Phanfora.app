@@ -53,8 +53,11 @@ type Copy = {
     dimensions: Record<'trend' | 'momentum' | 'liquidity' | 'risk' | 'market', string>
     weight: string
     contribution: string
+    weightedScore: string
+    riskPenalty: string
     methodology: string
     dataTime: string
+    freshness: Record<'fresh' | 'delayed' | 'stale', string>
     methodologyLink: string
     alternatives: string
     amount: string
@@ -144,8 +147,11 @@ const tr: Copy = {
     dimensions: { trend: 'Trend', momentum: 'Momentum', liquidity: 'Hacim ve likidite', risk: 'Risk uyumu', market: 'Piyasa koşulları' },
     weight: 'Ağırlık',
     contribution: 'Katkı',
+    weightedScore: 'Ağırlıklı puan',
+    riskPenalty: 'Risk cezası',
     methodology: 'Metodoloji',
     dataTime: 'Veri zamanı',
+    freshness: { fresh: 'Güncel', delayed: 'Gecikmeli', stale: 'Eski' },
     methodologyLink: 'Metodolojiyi incele',
     alternatives: 'Güçlü alternatifler',
     amount: 'Tutar',
@@ -155,9 +161,9 @@ const tr: Copy = {
     risks: { low: 'Düşük', balanced: 'Dengeli', high: 'Yüksek' },
     coverage: (scanned, excluded) => `${scanned} varlık tarandı · ${excluded} varlık veri kalitesi nedeniyle elendi`,
     assetNarratives: {
-      'apple-stock': { reasons: ['Haftalık trend ana ortalamaların üzerinde.', 'Likidite güçlü ve fiyatlama istikrarlı.', 'Momentum pozitif bölgede korunuyor.'], risk: 'Değerleme çarpanları tarihsel ortalamanın üzerinde.' },
-      'gold-commodity': { reasons: ['Haftalık trend yukarı yönünü koruyor.', 'Risk boyutu dengeli profil ile uyumlu.', 'Piyasa koşulları savunmacı talebi destekliyor.'], risk: 'Dolar güçlenmesi kısa vadeli baskı yaratabilir.' },
-      'bitcoin-crypto': { reasons: ['Momentum haftalık vadede güçlü kalıyor.', 'Küresel likidite derinliği yüksek.', 'Trend yapısı daha yüksek dipler üretiyor.'], risk: 'Yüksek oynaklık sert geri çekilme yaratabilir.' },
+      'apple-stock': { reasons: ['Trend seçili vadede ana ortalamaların üzerinde.', 'Likidite güçlü ve fiyatlama istikrarlı.', 'Momentum pozitif bölgede korunuyor.'], risk: 'Değerleme çarpanları tarihsel ortalamanın üzerinde.' },
+      'gold-commodity': { reasons: ['Trend yukarı yönünü koruyor.', 'Risk boyutu seçili profil ile uyumlu.', 'Piyasa koşulları savunmacı talebi destekliyor.'], risk: 'Dolar güçlenmesi kısa vadeli baskı yaratabilir.' },
+      'bitcoin-crypto': { reasons: ['Momentum seçili vadede güçlü kalıyor.', 'Küresel likidite derinliği yüksek.', 'Trend yapısı daha yüksek dipler üretiyor.'], risk: 'Yüksek oynaklık sert geri çekilme yaratabilir.' },
       'high-volatility': { reasons: ['Momentum seçili vadede güçlü.', 'Trend yapısı pozitif bölgede.'], risk: 'Oynaklık düşük risk profiliyle uyumsuz olabilir.' },
     },
   },
@@ -240,8 +246,11 @@ const en: Copy = {
     dimensions: { trend: 'Trend', momentum: 'Momentum', liquidity: 'Volume and liquidity', risk: 'Risk fit', market: 'Market conditions' },
     weight: 'Weight',
     contribution: 'Contribution',
+    weightedScore: 'Weighted score',
+    riskPenalty: 'Risk penalty',
     methodology: 'Methodology',
     dataTime: 'Data time',
+    freshness: { fresh: 'Fresh', delayed: 'Delayed', stale: 'Stale' },
     methodologyLink: 'Review methodology',
     alternatives: 'Strong alternatives',
     amount: 'Amount',
@@ -251,9 +260,10 @@ const en: Copy = {
     risks: { low: 'Low', balanced: 'Balanced', high: 'High' },
     coverage: (scanned, excluded) => `${scanned} assets scanned · ${excluded} excluded by data quality`,
     assetNarratives: {
-      'apple-stock': { reasons: ['The weekly trend remains above its core averages.', 'Liquidity is strong and pricing remains orderly.', 'Momentum remains in positive territory.'], risk: 'Valuation multiples remain above their historical average.' },
-      'gold-commodity': { reasons: ['The weekly trend continues upward.', 'The risk dimension fits a balanced profile.', 'Market conditions support defensive demand.'], risk: 'A stronger dollar may create short-term pressure.' },
-      'bitcoin-crypto': { reasons: ['Momentum remains strong on the weekly horizon.', 'Global liquidity depth is high.', 'The trend continues to form higher lows.'], risk: 'High volatility can cause a sharp pullback.' },
+      'apple-stock': { reasons: ['The selected-horizon trend remains above its core averages.', 'Liquidity is strong and pricing remains orderly.', 'Momentum remains in positive territory.'], risk: 'Valuation multiples remain above their historical average.' },
+      'gold-commodity': { reasons: ['The trend continues upward.', 'The risk dimension fits the selected profile.', 'Market conditions support defensive demand.'], risk: 'A stronger dollar may create short-term pressure.' },
+      'bitcoin-crypto': { reasons: ['Momentum remains strong on the selected horizon.', 'Global liquidity depth is high.', 'The trend continues to form higher lows.'], risk: 'High volatility can cause a sharp pullback.' },
+      'euro-dollar': { reasons: ['Liquidity remains strong for the selected horizon.', 'Volatility fits the selected risk profile.'], risk: 'Central-bank communication can change direction quickly.' },
       'high-volatility': { reasons: ['Momentum is strong for the selected horizon.', 'The trend structure remains positive.'], risk: 'Volatility may not suit a low-risk profile.' },
     },
   },

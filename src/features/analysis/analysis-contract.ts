@@ -31,6 +31,11 @@ export type Opportunity = {
   totalScore: number
   confidence: 'low' | 'medium' | 'high'
   dimensions: Record<ScoreDimension, number>
+  scoreEvidence: {
+    weights: Record<ScoreDimension, number>
+    weightedScore: number
+    riskPenalty: number
+  }
   reasons: readonly string[]
   primaryRisk: string
   methodologyVersion: 'fixture-v1'

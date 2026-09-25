@@ -19,7 +19,15 @@ function scoreForInput(asset: Opportunity, input: AnalysisInput): Opportunity {
   const riskMultiplier = input.riskProfile === 'low' ? 0.35 : input.riskProfile === 'balanced' ? 0.20 : 0.10
   const penalty = Math.max(0, riskFloor - asset.dimensions.risk) * riskMultiplier
   const totalScore = Math.max(0, Math.min(100, Math.round(weighted - penalty)))
-  return { ...asset, totalScore }
+  return {
+    ...asset,
+    totalScore,
+    scoreEvidence: {
+      weights: Object.fromEntries(Object.entries(weights).map(([dimension, weight]) => [dimension, weight * 100])) as Record<ScoreDimension, number>,
+      weightedScore: weighted,
+      riskPenalty: penalty,
+    },
+  }
 }
 
 export class InsufficientResultsError extends Error {

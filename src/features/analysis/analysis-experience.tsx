@@ -13,7 +13,7 @@ type ExperienceState =
   | { status: 'setup' }
   | { status: 'scanning'; stage: ScanStage }
   | { status: 'complete'; result: AnalysisResult }
-  | { status: 'error'; message: string }
+  | { status: 'error' }
 
 type AnalysisExperienceProps = {
   locale: Locale
@@ -33,18 +33,18 @@ export function AnalysisExperience({ locale }: AnalysisExperienceProps) {
       })
       setState({ status: 'complete', result })
     } catch {
-      setState({ status: 'error', message: text.scan.error })
+      setState({ status: 'error' })
     }
   }
 
-  if (state.status === 'setup') return <SetupWizard locale={locale} onComplete={run} />
+  if (state.status === 'setup') return <SetupWizard locale={locale} initialInput={lastInput ?? undefined} onComplete={run} />
   if (state.status === 'scanning') return <ScanView locale={locale} stage={state.stage} />
-  if (state.status === 'complete') return <ResultsView result={state.result} locale={locale} />
+  if (state.status === 'complete') return <ResultsView result={state.result} locale={locale} onEdit={() => setState({ status: 'setup' })} />
 
   return (
     <section className="error-panel" role="alert">
       <h1>{text.scan.errorTitle}</h1>
-      <p>{state.message}</p>
+      <p>{text.scan.error}</p>
       <div className="setup-actions">
         <button className="secondary-button" type="button" onClick={() => setState({ status: 'setup' })}>{text.scan.edit}</button>
         <button className="primary-button" type="button" disabled={!lastInput} onClick={() => lastInput && run(lastInput)}>{text.scan.retry}</button>

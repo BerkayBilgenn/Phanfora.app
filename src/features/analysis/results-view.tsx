@@ -1,17 +1,25 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
 import type { AnalysisResult } from './analysis-contract'
 import { OpportunityCard } from './opportunity-card'
 import { copy, type Locale } from '@/lib/copy'
 import { formatMoney } from '@/lib/format'
 
-export function ResultsView({ result, locale }: { result: AnalysisResult; locale: Locale }) {
+export function ResultsView({ result, locale, onEdit }: { result: AnalysisResult; locale: Locale; onEdit?: () => void }) {
   const text = copy[locale].results
+  const titleRef = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    titleRef.current?.focus()
+  }, [])
 
   return (
     <section className="results-view" aria-labelledby="results-title">
       <header className="results-header">
         <div>
           <p className="eyebrow">{text.demoData}</p>
-          <h1 id="results-title">{text.title}</h1>
+          <h1 id="results-title" ref={titleRef} tabIndex={-1}>{text.title}</h1>
         </div>
         <dl className="input-summary">
           <div><dt>{text.amount}</dt><dd className="numeric">{formatMoney(Number(result.input.amount), result.input.currency, locale)}</dd></div>
@@ -30,6 +38,7 @@ export function ResultsView({ result, locale }: { result: AnalysisResult; locale
           ))}
         </aside>
       </div>
+      {onEdit && <button className="secondary-button results-edit" type="button" onClick={onEdit}>{copy[locale].scan.edit}</button>}
       <p className="coverage-summary numeric">{text.coverage(result.scannedAssetCount, result.excludedAssetCount)}</p>
     </section>
   )

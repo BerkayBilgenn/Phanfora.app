@@ -14,7 +14,7 @@ function makeSeries(base: number, slope: number, variation: number) {
   }))
 }
 
-export const fixtureOpportunities: readonly Opportunity[] = [
+const rawFixtureOpportunities: readonly Omit<Opportunity, 'scoreEvidence'>[] = [
   {
     assetId: 'apple-stock', symbol: 'AAPL', name: 'Apple Inc.', assetClass: 'stock', venue: 'NASDAQ', quoteCurrency: 'USD',
     price: 238.14, changePercent: 1.82, totalScore: 88, confidence: 'high',
@@ -48,7 +48,7 @@ export const fixtureOpportunities: readonly Opportunity[] = [
     dimensions: { trend: 70, momentum: 66, liquidity: 96, risk: 92, market: 68 },
     reasons: ['Likidite haftalık uygulama için güçlü.', 'Oynaklık dengeli risk profiline uyuyor.'],
     primaryRisk: 'Merkez bankası iletişimi yönü hızla değiştirebilir.', methodologyVersion: 'fixture-v1',
-    observedAt: '2026-09-24T12:00:00.000Z', quality: { freshness: 'delayed', completeness: 1 },
+    observedAt: '2026-09-24T12:00:00.000Z', quality: { freshness: 'fresh', completeness: 1 },
     series: makeSeries(1.16, 0.001, 0.004),
   },
   {
@@ -77,3 +77,10 @@ export const fixtureOpportunities: readonly Opportunity[] = [
     series: makeSeries(5.2, 0.15, 0.6),
   },
 ] as const
+
+const fixtureWeights = { trend: 25, momentum: 25, liquidity: 20, risk: 20, market: 10 } as const
+
+export const fixtureOpportunities: readonly Opportunity[] = rawFixtureOpportunities.map((opportunity) => ({
+  ...opportunity,
+  scoreEvidence: { weights: fixtureWeights, weightedScore: opportunity.totalScore, riskPenalty: 0 },
+}))

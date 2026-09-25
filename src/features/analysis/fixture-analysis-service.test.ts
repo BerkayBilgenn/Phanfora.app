@@ -31,4 +31,13 @@ describe('fixtureAnalysisService', () => {
     expect([lowRisk.primary, ...lowRisk.alternatives].map((item) => item.assetId)).not.toContain('high-volatility')
     expect([highRisk.primary, ...highRisk.alternatives].map((item) => item.assetId)).toContain('high-volatility')
   })
+
+  it('returns the exact weights and risk penalty used for each score', async () => {
+    const result = await fixtureAnalysisService.run({ ...input, horizon: 'daily', riskProfile: 'high' }, () => undefined)
+
+    for (const opportunity of [result.primary, ...result.alternatives]) {
+      expect(opportunity.scoreEvidence.weights).toEqual({ trend: 15, momentum: 30, liquidity: 25, risk: 20, market: 10 })
+      expect(Math.round(opportunity.scoreEvidence.weightedScore - opportunity.scoreEvidence.riskPenalty)).toBe(opportunity.totalScore)
+    }
+  })
 })

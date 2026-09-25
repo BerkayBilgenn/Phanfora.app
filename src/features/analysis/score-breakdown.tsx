@@ -3,22 +3,22 @@ import Link from 'next/link'
 import type { Opportunity, ScoreDimension } from './analysis-contract'
 import { copy, type Locale } from '@/lib/copy'
 
-const weights: Record<ScoreDimension, number> = {
-  trend: 25,
-  momentum: 25,
-  liquidity: 20,
-  risk: 20,
-  market: 10,
-}
-
 const dimensions: ScoreDimension[] = ['trend', 'momentum', 'liquidity', 'risk', 'market']
 
-export function ScoreBreakdown({ opportunity, locale }: { opportunity: Opportunity; locale: Locale }) {
+type ScoreBreakdownProps = {
+  opportunity: Opportunity
+  locale: Locale
+  open?: boolean
+  onToggle?: (open: boolean) => void
+}
+
+export function ScoreBreakdown({ opportunity, locale, open, onToggle }: ScoreBreakdownProps) {
   const text = copy[locale].results
+  const { weights, weightedScore, riskPenalty } = opportunity.scoreEvidence
 
   return (
-    <details className="score-breakdown">
-      <summary>
+    <details className="score-breakdown" aria-label={text.scoreDisclosure} open={open} onToggle={(event) => onToggle?.(event.currentTarget.open)}>
+      <summary id={`score-summary-${opportunity.assetId}`} tabIndex={-1}>
         <span>{text.scoreDisclosure}</span>
         <ChevronDown aria-hidden="true" size={18} />
       </summary>
@@ -35,6 +35,10 @@ export function ScoreBreakdown({ opportunity, locale }: { opportunity: Opportuni
             )
           })}
         </div>
+        <dl className="method-meta">
+          <div><dt>{text.weightedScore}</dt><dd className="numeric">{weightedScore.toFixed(1)}</dd></div>
+          <div><dt>{text.riskPenalty}</dt><dd className="numeric">−{riskPenalty.toFixed(1)}</dd></div>
+        </dl>
         <dl className="method-meta">
           <div><dt>{text.methodology}</dt><dd>{opportunity.methodologyVersion}</dd></div>
           <div><dt>{text.dataTime}</dt><dd className="numeric">{new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(opportunity.observedAt))}</dd></div>
