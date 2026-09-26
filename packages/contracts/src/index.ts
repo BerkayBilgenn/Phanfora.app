@@ -31,5 +31,19 @@ export const ApiErrorSchema = Type.Object({
   }),
 });
 
+export const HorizonQuerySchema = Type.Object({
+  horizon: Type.Union([
+    Type.Literal('daily'),
+    Type.Literal('weekly'),
+    Type.Literal('monthly'),
+  ]),
+}, { additionalProperties: false });
+
+export const AssetIdParamsSchema = Type.Object({
+  id: Type.String({ minLength: 1, maxLength: 128 }),
+});
+
 export type CreateAnalysisBody = Static<typeof CreateAnalysisBodySchema>;
 export type IdempotencyHeaders = Static<typeof IdempotencyHeadersSchema>;
+export type HorizonQuery = Static<typeof HorizonQuerySchema>;
+export type AssetIdParams = Static<typeof AssetIdParamsSchema>;

@@ -84,6 +84,32 @@ export interface MarketCandidate {
   dataMode: DataMode;
 }
 
+export interface MarketOverview {
+  assetCount: number;
+  byAssetClass: Readonly<Record<AssetClass, number>>;
+  provider: string;
+  dataMode: DataMode;
+  observedAt: string | null;
+}
+
+export interface AssetSeries {
+  asset: CanonicalAsset;
+  horizon: Horizon;
+  series: readonly PricePoint[];
+  source: string;
+  observedAt: string;
+  freshness: Freshness;
+  dataMode: DataMode;
+  quality: QualityMetadata;
+}
+
+export interface ScanSummary {
+  scanned: number;
+  eligible: number;
+  excluded: number;
+  byAssetClass: Readonly<Record<AssetClass, number>>;
+}
+
 export interface RankedAsset {
   asset: CanonicalAsset;
   price: Money;
@@ -126,4 +152,5 @@ export interface AnalysisResult {
   calculatedAt: string;
   dataMode: DataMode;
   fxSnapshot: FxRateSnapshot;
+  scanSummary: ScanSummary;
 }

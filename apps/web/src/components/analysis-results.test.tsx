@@ -47,6 +47,10 @@ const result: AnalysisResult = {
     provider: 'Phanfora deterministic fixture', observedAt: '2026-09-24T09:00:00.000Z',
     freshness: 'fixture', dataMode: 'fixture',
   },
+  scanSummary: {
+    scanned: 3, eligible: 3, excluded: 0,
+    byAssetClass: { stock: 0, crypto: 3, commodity: 0, forex: 0, index: 0 },
+  },
 };
 
 describe('AnalysisResults', () => {

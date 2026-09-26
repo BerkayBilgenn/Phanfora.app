@@ -46,6 +46,51 @@ describe('Phanfora API', () => {
     expect(response.json().items.length).toBeGreaterThan(150);
   });
 
+  it('returns the real fixture market overview', async () => {
+    const response = await app().inject({ method: 'GET', url: '/v1/market/overview' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      assetCount: 7,
+      byAssetClass: { stock: 2, crypto: 2, commodity: 1, forex: 1, index: 1 },
+      provider: 'Phanfora deterministic fixture',
+      dataMode: 'fixture',
+      observedAt: '2026-09-24T09:00:00.000Z',
+    });
+  });
+
+  it('returns a requested asset OHLCV series and validates the horizon', async () => {
+    const response = await app().inject({
+      method: 'GET',
+      url: '/v1/assets/stock%3Aaapl-xnas/series?horizon=weekly',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      asset: { id: 'stock:aapl-xnas' },
+      horizon: 'weekly',
+      dataMode: 'fixture',
+      quality: { completeness: 1, integrity: 'verified' },
+    });
+    expect(response.json().series[0]).toMatchObject({
+      open: expect.any(String), high: expect.any(String), low: expect.any(String),
+      close: expect.any(String), volume: expect.any(String),
+    });
+
+    const invalidHorizon = await apps.at(-1)!.inject({
+      method: 'GET',
+      url: '/v1/assets/stock%3Aaapl-xnas/series?horizon=yearly',
+    });
+    expect(invalidHorizon.statusCode).toBe(400);
+  });
+
+  it('returns 404 for an unknown asset series', async () => {
+    const response = await app().inject({
+      method: 'GET',
+      url: '/v1/assets/missing/series?horizon=weekly',
+    });
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error.code).toBe('ASSET_NOT_FOUND');
+  });
+
   it('creates and idempotently replays an analysis', async () => {
     const first = await app().inject({
       method: 'POST', url: '/v1/analyses',
@@ -54,6 +99,12 @@ describe('Phanfora API', () => {
     });
     expect(first.statusCode).toBe(201);
     expect(first.json().dataMode).toBe('fixture');
+    expect(first.json().scanSummary).toEqual({
+      scanned: 7,
+      eligible: 6,
+      excluded: 1,
+      byAssetClass: { stock: 2, crypto: 2, commodity: 1, forex: 1, index: 1 },
+    });
 
     const second = await apps.at(-1)!.inject({
       method: 'POST', url: '/v1/analyses',
@@ -115,6 +166,8 @@ describe('Phanfora API', () => {
     const marketData: MarketDataProvider = {
       listAssets: () => fixtureMarket.listAssets(),
       getAsset: (id) => fixtureMarket.getAsset(id),
+      getSeries: (id, horizon) => fixtureMarket.getSeries(id, horizon),
+      getOverview: () => fixtureMarket.getOverview(),
       getCandidates: async () => { throw new MarketDataError('MARKET_DATA_RATE_LIMITED'); },
     };
     const fxRates: FxRateProvider = new FixtureFxRateProvider();

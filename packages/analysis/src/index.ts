@@ -1,8 +1,10 @@
 import { convertMoney } from '@phanfora/currency';
 import type {
+  AssetClass,
   AnalysisInput,
   AnalysisResult,
   QualityGateFailure,
+  ScanSummary,
   ScoreResult,
 } from '@phanfora/domain';
 import type { FxRateProvider, MarketDataProvider } from '@phanfora/market-data';
@@ -50,8 +52,19 @@ export class AnalysisService {
     accepted.sort((left, right) => right.totalScore - left.totalScore);
     const [primary, alternativeOne, alternativeTwo] = accepted;
     if (!primary || !alternativeOne || !alternativeTwo) {
-      throw new Error('INSUFFICIENT_QUALIFIED_ASSETS');
+      throw new Error('INSUFFICIENT_ELIGIBLE_ASSETS');
     }
+
+    const byAssetClass: Record<AssetClass, number> = {
+      stock: 0, crypto: 0, commodity: 0, forex: 0, index: 0,
+    };
+    for (const candidate of candidates) byAssetClass[candidate.asset.assetClass] += 1;
+    const scanSummary: ScanSummary = Object.freeze({
+      scanned: candidates.length,
+      eligible: accepted.length,
+      excluded: excluded.length,
+      byAssetClass: Object.freeze(byAssetClass),
+    });
 
     const result: AnalysisResult = Object.freeze({
       id: this.dependencies.createId(),
@@ -68,6 +81,7 @@ export class AnalysisService {
       calculatedAt,
       dataMode: primary.dataMode,
       fxSnapshot,
+      scanSummary,
     });
 
     this.dependencies.idempotencyStore.set(idempotencyKey, result);

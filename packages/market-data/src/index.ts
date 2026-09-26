@@ -1,16 +1,21 @@
 import { listCurrencies } from '@phanfora/currency';
 import type {
+  AssetClass,
+  AssetSeries,
   CanonicalAsset,
   CurrencyDefinition,
   FxRateSnapshot,
   Horizon,
   MarketCandidate,
+  MarketOverview,
 } from '@phanfora/domain';
 
 export interface MarketDataProvider {
   listAssets(): Promise<readonly CanonicalAsset[]>;
   getCandidates(horizon: Horizon): Promise<readonly MarketCandidate[]>;
   getAsset(id: string): Promise<CanonicalAsset>;
+  getSeries(id: string, horizon: Horizon): Promise<AssetSeries>;
+  getOverview(): Promise<MarketOverview>;
 }
 
 export interface FxRateProvider {
@@ -95,6 +100,12 @@ function buildCandidates(): readonly MarketCandidate[] {
   }));
 }
 
+function countAssetClasses(items: readonly { asset: { assetClass: AssetClass } }[]) {
+  const counts: Record<AssetClass, number> = { stock: 0, crypto: 0, commodity: 0, forex: 0, index: 0 };
+  for (const item of items) counts[item.asset.assetClass] += 1;
+  return Object.freeze(counts);
+}
+
 export class FixtureMarketDataProvider implements MarketDataProvider {
   async listAssets() {
     return assets;
@@ -108,6 +119,34 @@ export class FixtureMarketDataProvider implements MarketDataProvider {
     const asset = assets.find((item) => item.id === id);
     if (!asset) throw new Error('ASSET_NOT_FOUND');
     return asset;
+  }
+
+  async getSeries(id: string, horizon: Horizon): Promise<AssetSeries> {
+    const asset = await this.getAsset(id);
+    const candidate = (await this.getCandidates(horizon)).find((item) => item.asset.id === id);
+    if (!candidate) throw new Error('MARKET_DATA_UNAVAILABLE');
+    return Object.freeze({
+      asset,
+      horizon,
+      series: candidate.series,
+      source: candidate.source,
+      observedAt: candidate.observedAt,
+      freshness: candidate.quality.freshness,
+      dataMode: candidate.dataMode,
+      quality: candidate.quality,
+    });
+  }
+
+  async getOverview(): Promise<MarketOverview> {
+    const candidates = await this.getCandidates('daily');
+    const first = candidates[0];
+    return Object.freeze({
+      assetCount: candidates.length,
+      byAssetClass: countAssetClasses(candidates),
+      provider: first?.source ?? 'Phanfora deterministic fixture',
+      dataMode: first?.dataMode ?? 'fixture',
+      observedAt: first?.observedAt ?? null,
+    });
   }
 }
 

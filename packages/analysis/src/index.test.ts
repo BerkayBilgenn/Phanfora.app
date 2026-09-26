@@ -59,6 +59,34 @@ describe('analysis orchestration', () => {
       assetId: 'crypto:micro-usd',
       reason: 'LOW_LIQUIDITY',
     });
+    expect(result.scanSummary).toEqual({
+      scanned: 7,
+      eligible: 6,
+      excluded: 1,
+      byAssetClass: { stock: 2, crypto: 2, commodity: 1, forex: 1, index: 1 },
+    });
+  });
+
+  it('rejects a scan with fewer than three eligible assets', async () => {
+    const fixture = new FixtureMarketDataProvider();
+    const marketData: MarketDataProvider = {
+      listAssets: () => fixture.listAssets(),
+      getAsset: (id) => fixture.getAsset(id),
+      getCandidates: async (horizon) => (await fixture.getCandidates(horizon)).slice(0, 2),
+      getSeries: (id, horizon) => fixture.getSeries(id, horizon),
+      getOverview: () => fixture.getOverview(),
+    };
+    const analysis = new AnalysisService({
+      marketData,
+      fxRates: new FixtureFxRateProvider(),
+      clock: () => '2026-09-24T09:01:00.000Z',
+      createId: () => 'insufficient-analysis',
+      idempotencyStore: new Map(),
+    });
+
+    await expect(analysis.create(input, 'insufficient-request')).rejects.toThrow(
+      'INSUFFICIENT_ELIGIBLE_ASSETS',
+    );
   });
 
   it('requests only the selected currency rate and derives live result mode', async () => {
@@ -67,6 +95,8 @@ describe('analysis orchestration', () => {
     const marketData: MarketDataProvider = {
       listAssets: () => fixtureMarket.listAssets(),
       getAsset: (id) => fixtureMarket.getAsset(id),
+      getSeries: (id, horizon) => fixtureMarket.getSeries(id, horizon),
+      getOverview: () => fixtureMarket.getOverview(),
       getCandidates: async (horizon) => (await fixtureMarket.getCandidates(horizon)).map(
         (candidate) => Object.freeze({
           ...candidate,

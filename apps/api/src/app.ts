@@ -7,9 +7,13 @@ import {
 } from '@fastify/type-provider-typebox';
 import { AnalysisService } from '@phanfora/analysis';
 import {
+  AssetIdParamsSchema,
   CreateAnalysisBodySchema,
+  HorizonQuerySchema,
   IdempotencyHeadersSchema,
+  type AssetIdParams,
   type CreateAnalysisBody,
+  type HorizonQuery,
   type IdempotencyHeaders,
 } from '@phanfora/contracts';
 import type { AnalysisResult } from '@phanfora/domain';
@@ -35,6 +39,8 @@ class UnconfiguredMarketDataProvider implements MarketDataProvider {
   async listAssets() { return marketDataNotConfigured(); }
   async getCandidates() { return marketDataNotConfigured(); }
   async getAsset() { return marketDataNotConfigured(); }
+  async getSeries() { return marketDataNotConfigured(); }
+  async getOverview() { return marketDataNotConfigured(); }
 }
 
 class UnconfiguredFxRateProvider implements FxRateProvider {
@@ -103,6 +109,18 @@ export function buildApp(options: BuildAppOptions = {}) {
     dataMode: providerMode,
   }));
 
+  app.get('/v1/market/overview', async () => marketData.getOverview());
+
+  app.get<{
+    Params: AssetIdParams;
+    Querystring: HorizonQuery;
+  }>('/v1/assets/:id/series', {
+    schema: {
+      params: AssetIdParamsSchema,
+      querystring: HorizonQuerySchema,
+    },
+  }, async (request) => marketData.getSeries(request.params.id, request.query.horizon));
+
   app.post<{
     Body: CreateAnalysisBody;
     Headers: IdempotencyHeaders;
@@ -137,7 +155,11 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.setErrorHandler((error, _request, reply) => {
     const appError = error as Error & { statusCode?: number; validation?: unknown };
     const marketCode = appError instanceof MarketDataError ? appError.code : null;
-    const statusCode = marketCode === 'MARKET_DATA_NOT_CONFIGURED'
+    const statusCode = appError.message === 'ASSET_NOT_FOUND'
+      ? 404
+      : appError.message === 'INSUFFICIENT_ELIGIBLE_ASSETS'
+        ? 422
+        : marketCode === 'MARKET_DATA_NOT_CONFIGURED'
       || marketCode === 'MARKET_DATA_RATE_LIMITED'
       ? 503
       : marketCode === 'MARKET_DATA_UNAVAILABLE' || marketCode === 'FX_RATE_UNAVAILABLE'
@@ -147,14 +169,22 @@ export function buildApp(options: BuildAppOptions = {}) {
       : appError.message === 'ORIGIN_NOT_ALLOWED'
         ? 403
         : 500;
-    const code = marketCode ?? (appError.validation
+    const code = appError.message === 'ASSET_NOT_FOUND'
+      ? 'ASSET_NOT_FOUND'
+      : appError.message === 'INSUFFICIENT_ELIGIBLE_ASSETS'
+        ? 'INSUFFICIENT_ELIGIBLE_ASSETS'
+        : marketCode ?? (appError.validation
       ? 'VALIDATION_ERROR'
       : statusCode === 415
         ? 'UNSUPPORTED_MEDIA_TYPE'
         : statusCode === 403
           ? 'ORIGIN_NOT_ALLOWED'
           : 'INTERNAL_ERROR');
-    const message = marketCode === 'MARKET_DATA_RATE_LIMITED'
+    const message = appError.message === 'ASSET_NOT_FOUND'
+      ? 'Varlık bulunamadı.'
+      : appError.message === 'INSUFFICIENT_ELIGIBLE_ASSETS'
+        ? 'Analiz için yeterli kalitede varlık bulunamadı.'
+        : marketCode === 'MARKET_DATA_RATE_LIMITED'
       ? 'Canlı veri kotası dolu. Kısa süre sonra yeniden dene.'
       : marketCode === 'MARKET_DATA_NOT_CONFIGURED'
         ? 'Canlı piyasa verisi henüz yapılandırılmadı.'

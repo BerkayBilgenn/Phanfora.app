@@ -34,8 +34,8 @@ const candidate: MarketCandidate = {
   quality: { freshness: 'fixture', completeness: 1, integrity: 'verified' },
   marketStatus: 'open',
   series: Object.freeze([
-    { time: '2026-09-22T00:00:00.000Z', close: '98', volume: '1000' },
-    { time: '2026-09-23T00:00:00.000Z', close: '100', volume: '1100' },
+    { time: '2026-09-22T00:00:00.000Z', open: '97', high: '99', low: '96', close: '98', volume: '1000' },
+    { time: '2026-09-23T00:00:00.000Z', open: '98', high: '101', low: '97', close: '100', volume: '1100' },
   ]),
   source: 'Test Fixture',
   observedAt: '2026-09-24T09:00:00.000Z',

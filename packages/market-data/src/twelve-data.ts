@@ -1,6 +1,7 @@
 import { listCurrencies } from '@phanfora/currency';
 import type {
   AssetClass,
+  AssetSeries,
   CanonicalAsset,
   CurrencyDefinition,
   DataMode,
@@ -9,6 +10,7 @@ import type {
   FxRateSnapshot,
   Horizon,
   MarketCandidate,
+  MarketOverview,
   MarketStatus,
   PricePoint,
 } from '@phanfora/domain';
@@ -201,6 +203,41 @@ export class TwelveDataProvider implements MarketDataProvider, FxRateProvider {
     const asset = LIVE_ASSETS.find((candidate) => candidate.id === id);
     if (!asset) throw new Error('ASSET_NOT_FOUND');
     return freezeAsset(asset);
+  }
+
+  async getSeries(id: string, horizon: Horizon): Promise<AssetSeries> {
+    const asset = await this.getAsset(id);
+    const candidate = (await this.getCandidates(horizon)).find((item) => item.asset.id === id);
+    if (!candidate) throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+    return Object.freeze({
+      asset,
+      horizon,
+      series: candidate.series,
+      source: candidate.source,
+      observedAt: candidate.observedAt,
+      freshness: candidate.quality.freshness,
+      dataMode: candidate.dataMode,
+      quality: candidate.quality,
+    });
+  }
+
+  async getOverview(): Promise<MarketOverview> {
+    const candidates = await this.getCandidates('daily');
+    const counts: Record<AssetClass, number> = { stock: 0, crypto: 0, commodity: 0, forex: 0, index: 0 };
+    for (const candidate of candidates) counts[candidate.asset.assetClass] += 1;
+    const first = candidates[0];
+    if (!first) throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+    const observedAt = candidates.reduce(
+      (latest, candidate) => candidate.observedAt > latest ? candidate.observedAt : latest,
+      first.observedAt,
+    );
+    return Object.freeze({
+      assetCount: candidates.length,
+      byAssetClass: Object.freeze(counts),
+      provider: first.source,
+      dataMode: first.dataMode,
+      observedAt,
+    });
   }
 
   async listCurrencies(locale: string): Promise<readonly CurrencyDefinition[]> {
