@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import type { AnalysisInput, AnalysisResult, CurrencyDefinition } from '@phanfora/domain';
 
-import { AnalysisWizard } from '@/components/analysis-wizard';
+import { AnalysisPanel } from '@/components/analysis-wizard';
 import { AnalysisResults } from '@/components/analysis-results';
 import { ScanProgress } from '@/components/scan-progress';
 import { createAnalysis, fetchCurrencies } from '@/lib/api';
@@ -50,7 +50,7 @@ export default function TodayPage() {
           <span><b>05</b> varlık sınıfı</span><span><b>150+</b> para birimi</span><span><b>v1</b> metodoloji</span>
         </div>
       </section>
-      <AnalysisWizard currencies={currencies} onSubmit={handleSubmit} busy={busy} />
+      <AnalysisPanel currencies={currencies} onSubmit={handleSubmit} busy={busy} />
       {error ? <p className="page-error" role="alert">{error}</p> : null}
     </div>
   );
