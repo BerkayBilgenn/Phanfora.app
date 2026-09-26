@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { PricePoint } from '@phanfora/domain';
 
@@ -11,6 +11,14 @@ const series: readonly PricePoint[] = [
   { time: '2026-09-23T00:00:00.000Z', open: '98', high: '103', low: '97', close: '102', volume: '1200' },
   { time: '2026-09-24T00:00:00.000Z', open: '102', high: '105', low: '100', close: '104', volume: '1400' },
 ];
+
+function pointerDown(element: Element, clientX: number, clientY: number) {
+  fireEvent(element, new MouseEvent('pointerdown', {
+    bubbles: true,
+    clientX,
+    clientY,
+  }));
+}
 
 describe('MarketChart', () => {
   it('renders real candles, volume and an accessible price summary', () => {
@@ -31,5 +39,48 @@ describe('MarketChart', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Açılış 98');
     expect(screen.getByRole('status')).toHaveTextContent('Kapanış 102');
     expect(screen.getByRole('status')).toHaveTextContent('Hacim 1.200');
+  });
+
+  it('converts two drawing selections into a real trend line', () => {
+    const onTrendLinesChange = vi.fn();
+    render(<MarketChart
+      name="Bitcoin"
+      horizon="weekly"
+      series={series}
+      drawingMode
+      trendLines={[]}
+      onTrendLinesChange={onTrendLinesChange}
+    />);
+    const chart = screen.getByRole('img', { name: /Bitcoin haftalık mum grafiği/ });
+    vi.spyOn(chart, 'getBoundingClientRect').mockReturnValue({
+      x: 0, y: 0, left: 0, top: 0, right: 1000, bottom: 440,
+      width: 1000, height: 440, toJSON: () => ({}),
+    });
+
+    pointerDown(chart, 200, 120);
+    pointerDown(chart, 800, 220);
+
+    expect(onTrendLinesChange).toHaveBeenCalledWith([
+      expect.objectContaining({ startIndex: 0, endIndex: 2 }),
+    ]);
+  });
+
+  it('lets keyboard users select and delete an existing trend line', async () => {
+    const user = userEvent.setup();
+    const onTrendLinesChange = vi.fn();
+    render(<MarketChart
+      name="Bitcoin"
+      horizon="weekly"
+      series={series}
+      trendLines={[{
+        id: 'line-1', startIndex: 0, startPrice: 98, endIndex: 2, endPrice: 104,
+      }]}
+      onTrendLinesChange={onTrendLinesChange}
+    />);
+
+    await user.click(screen.getByRole('button', { name: 'Trend çizgisi 1 seç' }));
+    await user.click(screen.getByRole('button', { name: 'Seçili trend çizgisini sil' }));
+
+    expect(onTrendLinesChange).toHaveBeenCalledWith([]);
   });
 });
