@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import type { Horizon, PricePoint } from '@phanfora/domain';
 
@@ -41,6 +41,8 @@ export function MarketChart({
 }: MarketChartProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const trendLineIdPrefix = useId();
+  const nextTrendLineNumber = useRef(0);
   const [selectedIndex, setSelectedIndex] = useState(Math.max(0, series.length - 1));
   const [pendingPoint, setPendingPoint] = useState<{ index: number; price: number } | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function MarketChart({
       return;
     }
     onTrendLinesChange([...trendLines, {
-      id: `trend-${Date.now()}-${pendingPoint.index}-${point.index}`,
+      id: `${trendLineIdPrefix}-trend-${nextTrendLineNumber.current++}`,
       startIndex: pendingPoint.index,
       startPrice: pendingPoint.price,
       endIndex: point.index,
