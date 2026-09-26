@@ -4,11 +4,9 @@ test('completes the Phanfora analysis journey with transparent data metadata', a
   await page.goto('/');
 
   await page.getByLabel('Değerlendirilecek tutar').fill('25.000');
-  await page.getByRole('button', { name: 'Devam et' }).click();
   await page.getByRole('radio', { name: /Haftalık/ }).check();
-  await page.getByRole('button', { name: 'Devam et' }).click();
   await page.getByRole('radio', { name: /Dengeli/ }).check();
-  await page.getByRole('button', { name: 'Piyasaları tara' }).click();
+  await page.getByRole('button', { name: 'Canlı piyasaları analiz et' }).click();
 
   await expect(page.getByRole('heading', { name: /Bitcoin/ })).toBeVisible();
   await expect(page.getByText('Demo veri').first()).toBeVisible();
