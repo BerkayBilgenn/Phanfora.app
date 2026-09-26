@@ -38,6 +38,9 @@ interface TwelveDataProviderOptions {
 
 interface TwelveDataValue {
   datetime: string;
+  open?: string;
+  high?: string;
+  low?: string;
   close: string;
   volume?: string;
 }
@@ -121,6 +124,23 @@ function percentageChange(current: number, previous: number) {
   return ((current - previous) / previous) * 100;
 }
 
+export function assertValidCandle(point: PricePoint): void {
+  const open = Number(point.open);
+  const high = Number(point.high);
+  const low = Number(point.low);
+  const close = Number(point.close);
+  const volume = Number(point.volume);
+  if ([open, high, low, close, volume].some((value) => !Number.isFinite(value))
+    || volume < 0
+    || low > high
+    || open < low
+    || open > high
+    || close < low
+    || close > high) {
+    throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+  }
+}
+
 function volatility(closes: readonly number[]) {
   if (closes.length < 3) return 100;
   const returns = closes.slice(1).map((close, index) => percentageChange(close, closes[index] ?? close));
@@ -202,11 +222,24 @@ export class TwelveDataProvider implements MarketDataProvider, FxRateProvider {
       const candidates = LIVE_ASSETS.flatMap((asset) => {
         const series = payload[asset.providerSymbol];
         if (!series || series.status === 'error' || !series.values || series.values.length < 3) return [];
-        const normalized = [...series.values].reverse().map((point): PricePoint => Object.freeze({
-          time: toIso(point.datetime),
-          close: point.close,
-          volume: point.volume ?? '0',
-        }));
+        let normalized: readonly PricePoint[];
+        try {
+          normalized = [...series.values].reverse().map((point): PricePoint => {
+            const candle = Object.freeze({
+              time: toIso(point.datetime),
+              open: point.open ?? '',
+              high: point.high ?? '',
+              low: point.low ?? '',
+              close: point.close,
+              volume: point.volume ?? '0',
+            });
+            assertValidCandle(candle);
+            return candle;
+          });
+        } catch (error) {
+          if (error instanceof MarketDataError) return [];
+          throw error;
+        }
         const latest = normalized.at(-1);
         const previous = normalized.at(-2);
         if (!latest || !previous) return [];

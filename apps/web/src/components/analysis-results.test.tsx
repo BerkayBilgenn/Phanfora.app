@@ -22,8 +22,8 @@ function scoredAsset(symbol: string, name: string, score: number): ScoreResult {
     primaryRisk: 'VOLATILITY_HIGH',
     marketStatus: 'continuous',
     series: [
-      { time: '2026-09-22T00:00:00.000Z', close: '96', volume: '1000' },
-      { time: '2026-09-23T00:00:00.000Z', close: '100', volume: '1200' },
+      { time: '2026-09-22T00:00:00.000Z', open: '94', high: '98', low: '93', close: '96', volume: '1000' },
+      { time: '2026-09-23T00:00:00.000Z', open: '96', high: '102', low: '95', close: '100', volume: '1200' },
     ],
     source: 'Phanfora deterministic fixture',
     observedAt: '2026-09-24T09:00:00.000Z',

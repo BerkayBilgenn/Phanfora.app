@@ -48,6 +48,9 @@ export interface CanonicalAsset {
 
 export interface PricePoint {
   time: string;
+  open: string;
+  high: string;
+  low: string;
   close: string;
   volume: string;
 }

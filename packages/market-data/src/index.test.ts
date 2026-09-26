@@ -22,6 +22,13 @@ describe('fixture market data provider', () => {
     );
     expect(Object.isFrozen(candidates[0])).toBe(true);
     expect(Object.isFrozen(candidates[0]?.series)).toBe(true);
+    expect(candidates[0]?.series[0]).toEqual(expect.objectContaining({
+      open: expect.any(String),
+      high: expect.any(String),
+      low: expect.any(String),
+      close: expect.any(String),
+      volume: expect.any(String),
+    }));
   });
 
   it('rejects unknown asset IDs', async () => {

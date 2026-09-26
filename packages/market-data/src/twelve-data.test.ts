@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { MarketDataError, TwelveDataProvider } from './twelve-data';
+import { assertValidCandle, MarketDataError, TwelveDataProvider } from './twelve-data';
 
 const values = [
   { datetime: '2026-09-24 12:00:00', open: '108', high: '112', low: '107', close: '110', volume: '1200' },
@@ -62,12 +62,27 @@ describe('TwelveDataProvider market data', () => {
       quality: { freshness: 'live', integrity: 'verified' },
     });
     expect(candidates[0]?.series.map(({ close }) => close)).toEqual(['98', '100', '110']);
+    expect(candidates[0]?.series[0]).toEqual({
+      time: '2026-09-24T11:30:00.000Z',
+      open: '96',
+      high: '101',
+      low: '95',
+      close: '98',
+      volume: '900',
+    });
     expect(fetcher).toHaveBeenCalledTimes(1);
     const requested = new URL(String(fetcher.mock.calls[0]?.[0]));
     expect(requested.pathname).toBe('/time_series');
     expect(requested.searchParams.get('symbol')).toBe(symbols.join(','));
     expect(requested.searchParams.get('interval')).toBe('15min');
     expect(requested.searchParams.get('outputsize')).toBe('48');
+  });
+
+  it('rejects candles whose OHLC range is internally inconsistent', () => {
+    expect(() => assertValidCandle({
+      time: '2026-09-22T10:00:00.000Z',
+      open: '100', high: '90', low: '95', close: '98', volume: '10',
+    })).toThrow('MARKET_DATA_UNAVAILABLE');
   });
 
   it('keeps valid symbols when a batch member is unavailable', async () => {

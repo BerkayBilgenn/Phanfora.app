@@ -34,13 +34,22 @@ const observedAt = '2026-09-24T09:00:00.000Z';
 
 function makeSeries(start: number, slope: number) {
   return Object.freeze(
-    Array.from({ length: 12 }, (_, index) =>
-      Object.freeze({
+    Array.from({ length: 12 }, (_, index) => {
+      const close = start + slope * index + Math.sin(index) * slope * 0.25;
+      const previousClose = index === 0
+        ? close - slope * 0.3
+        : start + slope * (index - 1) + Math.sin(index - 1) * slope * 0.25;
+      const high = Math.max(previousClose, close) + Math.abs(slope) * 0.25;
+      const low = Math.min(previousClose, close) - Math.abs(slope) * 0.25;
+      return Object.freeze({
         time: new Date(Date.UTC(2026, 8, 13 + index)).toISOString(),
-        close: (start + slope * index + Math.sin(index) * slope * 0.25).toFixed(2),
+        open: previousClose.toFixed(4),
+        high: high.toFixed(4),
+        low: low.toFixed(4),
+        close: close.toFixed(4),
         volume: String(1_000_000 + index * 84_000),
-      }),
-    ),
+      });
+    }),
   );
 }
 
