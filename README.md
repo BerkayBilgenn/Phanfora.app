@@ -1,46 +1,95 @@
 # Phanfora App
 
-Phanfora turns an amount, investment horizon, and risk preference into a short, explainable ranking of global market opportunities. This repository contains the application for `app.phanfora.com`; the landing page at `phanfora.com` remains independently deployed.
+Phanfora, kullanıcının tutar, vade ve risk tercihini alıp küresel varlık sınıflarını açıklanabilir bir metodolojiyle karşılaştıran finansal karar destek uygulamasıdır.
 
-> **Fixture-only release:** Every market result in Phase 1 is deterministic demonstration data. Nothing in this repository may be presented as live market data or investment execution.
+Bu repo `app.phanfora.com` uygulamasını içerir. Tanıtım sitesi `phanfora.com` ayrı repo ve dağıtım olarak kalır.
 
-## Local development
+## Şu anda çalışan kapsam
 
-Node.js 22 is required. The repository includes `.nvmrc`:
+- Tutar ve 150’den fazla ISO 4217 para birimi arasından seçim
+- Günlük, haftalık veya aylık vade
+- Düşük, dengeli veya yüksek risk profili
+- Hisse, kripto, emtia, döviz ve endeks fixture’ları
+- Bir ana fırsat ve iki alternatif
+- Phanfora Skoru ve beş alt boyut
+- Güven düzeyi, en fazla üç gerekçe ve ana risk
+- Fiyat grafiği ve ekran okuyucu için metinsel grafik özeti
+- Kaynak, gözlem zamanı, piyasa durumu ve metodoloji sürümü
+- Responsive masaüstü/mobil uygulama kabuğu
+- Fastify API ve bağımsız worker sınırı
+
+## Önemli veri notu
+
+Yerel sürüm deterministik geliştirme verisi kullanır ve arayüzde her zaman **Demo veri** olarak işaretlenir. Bu veri canlı fiyat değildir ve yatırım tavsiyesi oluşturmaz.
+
+Gerçek zamanlı kullanıma geçerken lisanslı piyasa ve döviz sağlayıcıları `MarketDataProvider` ve `FxRateProvider` arayüzleri arkasına eklenir. Sağlayıcı anahtarları yalnızca sunucuda tutulur. Veri tazeliği veya bütünlüğü kalite kapısını geçmezse skor üretilmez.
+
+## Gereksinimler
+
+- Node.js 24 LTS
+- pnpm 9.15 veya üzeri
+
+## Yerelde çalıştırma
 
 ```bash
-nvm use
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-Open `http://localhost:3000`. Run the full local quality gate with:
+Ardından:
+
+- Uygulama: [http://127.0.0.1:3300](http://127.0.0.1:3300)
+- API sağlık kontrolü: [http://127.0.0.1:4300/health](http://127.0.0.1:4300/health)
+
+Bu bilgisayarda `3000` portu başka bir yerel uygulama tarafından kullanıldığı için Phanfora varsayılan olarak `3300`, API ise `4300` portunda çalışır.
+
+Worker sınırını tek bir fixture işiyle doğrulamak için:
 
 ```bash
-npm run check
-npm run test:e2e
+pnpm dev:worker
 ```
 
-`npm run check` runs ESLint, strict TypeScript, Vitest, and a production build. Browser tests start their own isolated server on port 3106 and run desktop and mobile Chromium projects.
+## Kalite komutları
 
-## Phase 1 routes
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm test:e2e --project=chromium
+```
 
-- `/` — localized amount, horizon, and risk flow with deterministic results
-- `/analysis` — stable fixture result surface for direct review
-- `/methodology` — Turkish and English scoring methodology
+Playwright tarayıcısı sistemde yoksa bir kez kur:
 
-## Delivery plans
+```bash
+pnpm exec playwright install chromium
+```
 
-The approved product is decomposed into five independently runnable plans:
+## Repo yapısı
 
-1. Foundation — this vertical slice
-2. Market Data — next
-3. Scoring Engine
-4. Accounts and Persistence
-5. Production Integration
+```text
+apps/
+  web/       Next.js kullanıcı arayüzü
+  api/       Fastify HTTP API
+  worker/    Tarama işi yürütme sınırı
+packages/
+  domain/       Kanonik finans ve analiz tipleri
+  contracts/    Sürümlenebilir API şemaları
+  currency/     ISO 4217 kataloğu ve hassas kur dönüşümü
+  market-data/  Sağlayıcı sözleşmeleri ve fixture verisi
+  scoring/      Deterministik Phanfora Skoru v1
+  analysis/     Tarama ve sıralama orkestrasyonu
+```
 
-The approved product spec and foundation plan live under `docs/superpowers/`.
+## Mimari kararlar
 
-## Environment policy
+- Para değerleri API sınırlarında ondalık metin olarak taşınır.
+- Yetkili para hesaplarında JavaScript kayan nokta aritmetiği kullanılmaz.
+- Bir analiz içindeki tüm dönüşümler aynı değişmez kur snapshot’ını kullanır.
+- Aynı idempotency anahtarı aynı analiz sonucunu döndürür.
+- Skor, veri snapshot’ı ve metodoloji sürümü birlikte saklanabilecek biçimdedir.
+- Web, API ve worker ayrı ayrı dağıtılabilir; domain paketleri framework bağımsızdır.
 
-`.env*` files are ignored except `.env.example`. Never commit credentials. A secret must never use a `NEXT_PUBLIC_` prefix; that prefix is reserved for values intentionally safe to expose in browser bundles.
+## Sonraki üretim fazları
+
+PostgreSQL kalıcılığı, Redis kuyruğu, üretim kimliği, lisanslı canlı veri, hata izleme, yedekleme ve hukuk incelemesi ayrı planlarla eklenmelidir. Mevcut sınırlar bu entegrasyonların kullanıcı akışını veya skor motorunu yeniden yazmadan yapılması için oluşturulmuştur.
