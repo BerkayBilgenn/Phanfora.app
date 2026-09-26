@@ -4,7 +4,7 @@ import type { AnalysisResult } from '@phanfora/domain';
 import { messages } from '../lib/messages';
 
 import { AssetCard } from './asset-card';
-import { PriceChart } from './price-chart';
+import { MarketChart } from './market-chart';
 import { ScoreBreakdown } from './score-breakdown';
 
 interface AnalysisResultsProps {
@@ -63,7 +63,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
             <span className={positive ? 'change-positive' : 'change-negative'}>{positive ? '↑ Yükseliş' : '↓ Düşüş'} · %{Math.abs(Number(primary.changePercent)).toLocaleString('tr-TR')}</span>
           </div>
 
-          <PriceChart name={primary.asset.name} series={primary.series} />
+          <MarketChart name={primary.asset.name} horizon={result.input.horizon} series={primary.series} />
 
           <div className="reason-grid">
             <div>

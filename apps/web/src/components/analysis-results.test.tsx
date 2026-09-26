@@ -62,7 +62,7 @@ describe('AnalysisResults', () => {
     expect(screen.getAllByText('Demo veri').length).toBeGreaterThan(0);
     expect(screen.getByText('Yüksek güven')).toBeInTheDocument();
     expect(screen.getByText(/Oynaklık yüksek/)).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /Bitcoin fiyat eğilimi/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Bitcoin haftalık mum grafiği/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^(Al|Sat)$/ })).not.toBeInTheDocument();
   });
 
