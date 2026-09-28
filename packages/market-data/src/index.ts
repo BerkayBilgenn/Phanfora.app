@@ -19,6 +19,7 @@ export interface FxRateProvider {
 }
 
 export { MarketDataError, TwelveDataProvider } from './twelve-data';
+export { KrakenMarketDataProvider, FrankfurterFxRateProvider } from './public-data';
 
 const assets = Object.freeze([
   { id: 'crypto:btc-usd', symbol: 'BTC', name: 'Bitcoin', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high' },

@@ -1,4 +1,4 @@
-import type { AnalysisInput, AnalysisResult, CurrencyDefinition } from '@phanfora/domain';
+import type { AnalysisInput, AnalysisResult, CurrencyDefinition, Horizon, MarketCandidate } from '@phanfora/domain';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:4000';
 
@@ -16,6 +16,16 @@ export async function fetchCurrencies(): Promise<CurrencyDefinition[]> {
   });
   const body = await expectJson<{ items: CurrencyDefinition[] }>(response);
   return body.items;
+}
+
+export interface MarketQuotes {
+  items: MarketCandidate[];
+  dataMode: 'live' | 'public' | 'fixture';
+}
+
+export async function fetchQuotes(horizon: Horizon = 'daily'): Promise<MarketQuotes> {
+  const response = await fetch(`${apiUrl}/v1/market/quotes?horizon=${horizon}`, { cache: 'no-store' });
+  return expectJson<MarketQuotes>(response);
 }
 
 export async function createAnalysis(input: AnalysisInput): Promise<AnalysisResult> {

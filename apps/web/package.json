@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "NEXT_PUBLIC_API_URL=http://127.0.0.1:4300 next dev --hostname 127.0.0.1 --port 3300",
-    "dev:e2e": "pnpm dev",
+    "dev:e2e": "NEXT_PUBLIC_E2E_FIXTURE=1 pnpm dev",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1 --port 3300",
     "lint": "eslint src",

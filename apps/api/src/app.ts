@@ -9,6 +9,7 @@ import { AnalysisService } from '@phanfora/analysis';
 import {
   CreateAnalysisBodySchema,
   IdempotencyHeadersSchema,
+  MarketQuotesQuerySchema,
   type CreateAnalysisBody,
   type IdempotencyHeaders,
 } from '@phanfora/contracts';
@@ -24,7 +25,7 @@ export interface BuildAppOptions extends FastifyServerOptions {
   allowedOrigins?: readonly string[];
   marketData?: MarketDataProvider;
   fxRates?: FxRateProvider;
-  providerMode?: 'fixture' | 'live';
+  providerMode?: 'fixture' | 'live' | 'public';
 }
 
 function marketDataNotConfigured(): never {
@@ -84,7 +85,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   });
 
   app.get('/health', async () => providerConfigured
-    ? { status: 'ok', dataMode: providerMode, provider: providerMode === 'live' ? 'Twelve Data' : 'Fixture' }
+    ? { status: 'ok', dataMode: providerMode, provider: providerMode === 'live' ? 'Twelve Data' : providerMode === 'public' ? 'Kraken + Frankfurter' : 'Fixture' }
     : {
         status: 'degraded',
         dataMode: providerMode,
@@ -100,6 +101,15 @@ export function buildApp(options: BuildAppOptions = {}) {
 
   app.get('/v1/assets', async () => ({
     items: await marketData.listAssets(),
+    dataMode: providerMode,
+  }));
+
+  app.get('/v1/market/quotes', {
+    schema: {
+      querystring: MarketQuotesQuerySchema,
+    },
+  }, async (request) => ({
+    items: await marketData.getCandidates(request.query.horizon ?? 'daily'),
     dataMode: providerMode,
   }));
 

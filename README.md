@@ -6,23 +6,24 @@ Bu repo `app.phanfora.com` uygulamasını içerir. Tanıtım sitesi `phanfora.co
 
 ## Şu anda çalışan kapsam
 
-- Tutar ve 150’den fazla ISO 4217 para birimi arasından seçim
-- Günlük, haftalık veya aylık vade
-- Düşük, dengeli veya yüksek risk profili
-- Hisse, kripto, emtia, döviz ve endeks fixture’ları
-- Bir ana fırsat ve iki alternatif
-- Phanfora Skoru ve beş alt boyut
-- Güven düzeyi, en fazla üç gerekçe ve ana risk
-- Fiyat grafiği ve ekran okuyucu için metinsel grafik özeti
-- Kaynak, gözlem zamanı, piyasa durumu ve metodoloji sürümü
-- Responsive masaüstü/mobil uygulama kabuğu
-- Fastify API ve bağımsız worker sınırı
+- Referans mockup’a göre kurulmuş piyasa kontrol merkezi; fiyat ve OHLCV grafiği API cevabından gelir.
+- Piyasalar, Radar, Analizler, Portföy, Takip Listesi, Alarmlar, Raporlar ve Ayarlar sayfaları çalışır.
+- Takip listesi, pozisyonlar, fiyat eşikleri, analiz geçmişi ve tercihler tarayıcının yerel depolamasında tutulur.
+- Alarmlar yalnız ilgili sayfa açıkken ve fiyat yenilendiğinde değerlendirilir; sunucu tarafı bildirim sistemi henüz yoktur.
+- Portföy CSV ve kişisel kayıtlar JSON olarak indirilebilir.
+- Analiz, tutar/para birimi/vade/risk profiliyle bir ana fırsat ve iki alternatif döndürür; kaynak ve gözlem zamanı gösterilir.
 
-## Önemli veri notu
+## Piyasa verisi
 
-Yerel sürüm deterministik geliştirme verisi kullanır ve arayüzde her zaman **Demo veri** olarak işaretlenir. Bu veri canlı fiyat değildir ve yatırım tavsiyesi oluşturmaz.
+`TWELVE_DATA_API_KEY` sunucu ortamında varsa hisse, kripto, emtia ve döviz için Twelve Data kullanılır. Anahtar yoksa Kraken'in açık spot OHLC uç noktasıyla BTC, ETH, SOL, XRP ve ADA fiyatları; döviz dönüşümlerinde Frankfurter'ın günlük kurları kullanılır. Anahtarsız mod hisse, endeks veya emtia verisi sunmaz. Ekran, mevcut veri kaynağını ve gözlem zamanını belirtir; sağlayıcı erişilemezse fiyat oluşturmaz.
 
-Gerçek zamanlı kullanıma geçerken lisanslı piyasa ve döviz sağlayıcıları `MarketDataProvider` ve `FxRateProvider` arayüzleri arkasına eklenir. Sağlayıcı anahtarları yalnızca sunucuda tutulur. Veri tazeliği veya bütünlüğü kalite kapısını geçmezse skor üretilmez.
+```bash
+TWELVE_DATA_API_KEY=... pnpm dev
+```
+
+Geliştirme ortamındaki `pnpm dev:e2e` komutu test amacıyla `PHANFORA_E2E_FIXTURE=1` kullanır. Bu deterministik değerler normal `pnpm dev` veya üretim ekranında gösterilmez.
+
+Kişisel kayıtlar bu tarayıcıya özeldir; hesaplar arası senkronizasyon veya yedekleme yoktur. İstersen kayıtları Raporlar bölümünden JSON olarak indirebilirsin.
 
 ## Gereksinimler
 
@@ -76,7 +77,7 @@ packages/
   domain/       Kanonik finans ve analiz tipleri
   contracts/    Sürümlenebilir API şemaları
   currency/     ISO 4217 kataloğu ve hassas kur dönüşümü
-  market-data/  Sağlayıcı sözleşmeleri ve fixture verisi
+  market-data/  Twelve Data, Kraken, Frankfurter ve test fixture sağlayıcıları
   scoring/      Deterministik Phanfora Skoru v1
   analysis/     Tarama ve sıralama orkestrasyonu
 ```

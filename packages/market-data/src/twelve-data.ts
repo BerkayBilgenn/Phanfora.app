@@ -38,6 +38,9 @@ interface TwelveDataProviderOptions {
 
 interface TwelveDataValue {
   datetime: string;
+  open?: string;
+  high?: string;
+  low?: string;
   close: string;
   volume?: string;
 }
@@ -74,9 +77,9 @@ const LIVE_ASSETS = Object.freeze([
 ] satisfies readonly LiveAsset[]);
 
 const horizonRequest = Object.freeze({
-  daily: { interval: '15min', outputsize: '48' },
-  weekly: { interval: '1h', outputsize: '60' },
-  monthly: { interval: '1day', outputsize: '90' },
+  daily: { interval: '15min', outputsize: '97' },
+  weekly: { interval: '1h', outputsize: '169' },
+  monthly: { interval: '1day', outputsize: '31' },
 } satisfies Record<Horizon, { interval: string; outputsize: string }>);
 
 function clamp(value: number, minimum = 0, maximum = 100) {
@@ -121,15 +124,18 @@ function percentageChange(current: number, previous: number) {
   return ((current - previous) / previous) * 100;
 }
 
-function volatility(closes: readonly number[]) {
+function volatility(closes: readonly number[], horizon: Horizon, assetClass: AssetClass) {
   if (closes.length < 3) return 100;
   const returns = closes.slice(1).map((close, index) => percentageChange(close, closes[index] ?? close));
   const mean = returns.reduce((sum, value) => sum + value, 0) / returns.length;
   const variance = returns.reduce((sum, value) => sum + (value - mean) ** 2, 0) / returns.length;
-  return Math.sqrt(variance) * Math.sqrt(252);
+  const tradingDays = assetClass === 'crypto' ? 365 : 252;
+  const periodsPerDay = horizon === 'daily' ? 96 : horizon === 'weekly' ? 24 : 1;
+  return Math.sqrt(variance) * Math.sqrt(tradingDays * periodsPerDay);
 }
 
-function deriveDimensions(closes: readonly number[], assetClass: AssetClass): DimensionScores {
+function deriveDimensions(series: readonly PricePoint[], horizon: Horizon, assetClass: AssetClass): DimensionScores {
+  const closes = series.map(({ close }) => Number(close));
   const first = closes[0];
   const previous = closes.at(-2);
   const current = closes.at(-1);
@@ -138,10 +144,11 @@ function deriveDimensions(closes: readonly number[], assetClass: AssetClass): Di
   }
   const trendChange = percentageChange(current, first);
   const momentumChange = percentageChange(current, previous);
-  const measuredVolatility = volatility(closes);
+  const measuredVolatility = volatility(closes, horizon, assetClass);
   const trend = Math.round(clamp(50 + trendChange * 4));
   const momentum = Math.round(clamp(50 + momentumChange * 5));
-  const liquidity = assetClass === 'commodity' ? 91 : 96;
+  const averageTurnover = series.reduce((sum, point) => sum + Number(point.close) * Number(point.volume), 0) / series.length;
+  const liquidity = Math.round(clamp(10 + Math.log10(1 + averageTurnover) * 10));
   const riskFit = Math.round(clamp(100 - measuredVolatility * 1.5));
   const marketConditions = Math.round(clamp((trend + momentum) / 2));
   return Object.freeze({ trend, momentum, liquidity, riskFit, marketConditions });
@@ -202,8 +209,20 @@ export class TwelveDataProvider implements MarketDataProvider, FxRateProvider {
       const candidates = LIVE_ASSETS.flatMap((asset) => {
         const series = payload[asset.providerSymbol];
         if (!series || series.status === 'error' || !series.values || series.values.length < 3) return [];
+        if (series.values.some((point) => {
+          const open = Number(point.open);
+          const high = Number(point.high);
+          const low = Number(point.low);
+          const close = Number(point.close);
+          const volume = Number(point.volume ?? '0');
+          return [open, high, low, close, volume].some((value) => !Number.isFinite(value))
+            || low > high || open < low || open > high || close < low || close > high || volume < 0;
+        })) return [];
         const normalized = [...series.values].reverse().map((point): PricePoint => Object.freeze({
           time: toIso(point.datetime),
+          ...(point.open !== undefined ? { open: point.open } : {}),
+          ...(point.high !== undefined ? { high: point.high } : {}),
+          ...(point.low !== undefined ? { low: point.low } : {}),
           close: point.close,
           volume: point.volume ?? '0',
         }));
@@ -218,9 +237,9 @@ export class TwelveDataProvider implements MarketDataProvider, FxRateProvider {
         const candidate: MarketCandidate = Object.freeze({
           asset: naturalAsset,
           price: Object.freeze({ amount: latest.close, currency: naturalAsset.quoteCurrency }),
-          changePercent: percentageChange(Number(latest.close), Number(previous.close)).toFixed(4),
-          dimensions: deriveDimensions(closes, naturalAsset.assetClass),
-          volatility: Number(volatility(closes).toFixed(2)),
+          changePercent: percentageChange(Number(latest.close), Number(normalized[0]?.close)).toFixed(4),
+          dimensions: deriveDimensions(normalized, horizon, naturalAsset.assetClass),
+          volatility: Number(volatility(closes, horizon, naturalAsset.assetClass).toFixed(2)),
           quality: Object.freeze({
             freshness,
             completeness: Math.min(1, normalized.length / Number(request.outputsize)),

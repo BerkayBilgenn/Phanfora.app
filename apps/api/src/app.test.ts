@@ -46,6 +46,25 @@ describe('Phanfora API', () => {
     expect(response.json().items.length).toBeGreaterThan(150);
   });
 
+  it('serves provider prices and observed timestamps without replacing them with demo values', async () => {
+    const response = await app().inject({ method: 'GET', url: '/v1/market/quotes?horizon=weekly' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().dataMode).toBe('fixture');
+    expect(response.json().items[0]).toMatchObject({
+      asset: { symbol: 'BTC' }, price: { amount: '67420.18' },
+      source: 'Phanfora deterministic fixture', observedAt: '2026-09-24T09:00:00.000Z',
+    });
+  });
+
+  it('rejects unsupported quote horizons and unavailable providers', async () => {
+    const invalid = await app().inject({ method: 'GET', url: '/v1/market/quotes?horizon=yearly' });
+    expect(invalid.statusCode).toBe(400);
+    const instance = buildApp({ logger: false });
+    apps.push(instance);
+    const unavailable = await instance.inject({ method: 'GET', url: '/v1/market/quotes' });
+    expect(unavailable.statusCode).toBe(503);
+  });
+
   it('creates and idempotently replays an analysis', async () => {
     const first = await app().inject({
       method: 'POST', url: '/v1/analyses',

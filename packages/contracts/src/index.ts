@@ -24,6 +24,12 @@ export const IdempotencyHeadersSchema = Type.Object(
   { additionalProperties: true },
 );
 
+export const MarketQuotesQuerySchema = Type.Object({
+  horizon: Type.Optional(Type.Union([
+    Type.Literal('daily'), Type.Literal('weekly'), Type.Literal('monthly'),
+  ])),
+}, { additionalProperties: false });
+
 export const ApiErrorSchema = Type.Object({
   error: Type.Object({
     code: Type.String(),
