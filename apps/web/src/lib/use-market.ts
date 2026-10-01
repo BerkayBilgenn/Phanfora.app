@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Horizon, MarketCandidate } from '@phanfora/domain';
 import { fetchQuotes } from './api';
 
-export function useMarket(horizon: Horizon = 'daily', refreshMs = 60_000) {
+export function useMarket(horizon: Horizon = 'daily', refreshMs = 60_000, assetIds: readonly string[] = []) {
+  const assetKey = assetIds.join(',');
   const intervalMs = Number.isFinite(refreshMs) ? Math.min(300_000, Math.max(30_000, refreshMs)) : 60_000;
   const [items, setItems] = useState<MarketCandidate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +13,7 @@ export function useMarket(horizon: Horizon = 'daily', refreshMs = 60_000) {
   const [updatedAt, setUpdatedAt] = useState('');
   const refresh = useCallback(async () => {
     try {
-      const response = await fetchQuotes(horizon);
+      const response = await fetchQuotes(horizon, assetKey ? assetKey.split(',') : []);
       if (response.dataMode === 'fixture' && process.env.NEXT_PUBLIC_E2E_FIXTURE !== '1') {
         throw new Error('Örnek veri üretim ekranında gösterilemez.');
       }
@@ -23,7 +24,7 @@ export function useMarket(horizon: Horizon = 'daily', refreshMs = 60_000) {
       setItems([]);
       setError(caught instanceof Error ? caught.message : 'Piyasa verisi alınamadı.');
     } finally { setLoading(false); }
-  }, [horizon]);
+  }, [horizon, assetKey]);
   useEffect(() => {
     const initial = window.setTimeout(() => void refresh(), 0);
     const id = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, intervalMs);

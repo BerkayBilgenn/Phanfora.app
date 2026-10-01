@@ -23,6 +23,10 @@ TWELVE_DATA_API_KEY=... pnpm dev
 
 Geliştirme ortamındaki `pnpm dev:e2e` komutu test amacıyla `PHANFORA_E2E_FIXTURE=1` kullanır. Bu deterministik değerler normal `pnpm dev` veya üretim ekranında gösterilmez.
 
+## Haber akışı
+
+Genel bakıştaki haberler üç yayıncının açık RSS akışından alınır: kripto için CoinDesk, hisse piyasası duyuruları için Nasdaq Trader, enerji emtiası için ABD Enerji Enformasyon İdaresi (EIA). API başlık, kaynak, yayın tarihi ve özgün haber bağlantısını sunar; tam metni kopyalamaz. Haberler kaynak dilinde görünür. Akıştaki tüm geçerli başlıklar kaydırılarak görülebilir. Açık sayfa her dakika yeni başlıkları kontrol eder; sunucu Nasdaq Trader'ı dakikada bir, CoinDesk'i beş dakikada bir, EIA'yı on beş dakikada bir yeniler. RSS kaynaklarının kendi yayın temposu farklı olabilir. Geçici erişim hatasında en son alınan başlıklar gecikme uyarısıyla gösterilir. Başarılı kaynak verisi yoksa haber üretilmez. Emtia kapsamı şu anda EIA'nın enerji haberleriyle sınırlıdır.
+
 Kişisel kayıtlar bu tarayıcıya özeldir; hesaplar arası senkronizasyon veya yedekleme yoktur. İstersen kayıtları Raporlar bölümünden JSON olarak indirebilirsin.
 
 ## Gereksinimler

@@ -30,6 +30,11 @@ export const MarketQuotesQuerySchema = Type.Object({
   ])),
 }, { additionalProperties: false });
 
+export const MarketQuotesBodySchema = Type.Object({
+  horizon: Type.Union([Type.Literal('daily'), Type.Literal('weekly'), Type.Literal('monthly')]),
+  assetIds: Type.Array(Type.String({ minLength: 3, maxLength: 80, pattern: '^[a-z]+:[a-z0-9-]+$' })),
+}, { additionalProperties: false });
+
 export const ApiErrorSchema = Type.Object({
   error: Type.Object({
     code: Type.String(),

@@ -1,0 +1,42 @@
+Use case: ui-mockup. Create an exceptional high-fidelity desktop dashboard for PHANFORA, a MULTI-ASSET INVESTMENT RESEARCH AND DECISION-SUPPORT platform, in Turkish. This helps people evaluate crypto, stocks, commodities, gold, indices and currencies using timely market data and evidence-based commentary. It is NOT a trade execution screen.
+
+Reference image role: the supplied prior mockup is a STYLE REFERENCE only for its sophisticated, detailed charcoal financial UI, small controls and dense polished layout. Completely change its product content and main visualizations. REMOVE all order books, bid/ask tables, market depth, order placement and single-asset candlestick focus. Replace them with a multi-asset investment overview, comparable performance, readable explanations and risk context.
+
+OUTPUT: one flat full-screen desktop product screenshot, landscape 16:10, high resolution, crisp exquisite typography, no device frame/perspective/browser chrome. Rich modern professional design with meaningful detail, never plain or sparse. A convincingly handcrafted product with impeccable grid alignment, optical spacing, refined financial micro-details and beautiful charts. Subtle dimensional panels but no neon glows, decorative radar, spheres, sci-fi art, marketing hero slogans or big buttons.
+
+STYLE: near-black graphite #101418, charcoal #191F24 cards, subtle 1 px #2C343B borders, small 10 px corners, warm white and elegant grey typography. Brand accent soft electric chartreuse used SPARINGLY for active states and a compact action. Chart colors gold #D9B66F, mint #72D3B0, icy blue #7BB8E6, restrained lavender #A799D9. Sophisticated Swiss grotesk text, tabular numbers, tiny consistent outline icons. The sophistication comes from rich purposeful information, stunning chart craftsmanship, great typography and disciplined color.
+
+APP CHROME:
+Left slim sidebar approximately 175 px: geometric P monogram plus PHANFORA; workspace selector 'Kişisel alan'; nav labels 'Genel bakış' selected, 'Piyasalar', 'Keşfet', 'Karşılaştır', 'İçgörüler', 'Portföy', 'Takip listesi', 'Alarmlar'. Bottom small data-status indicator, 'Ayarlar' and neutral generic avatar; no invented full personal name.
+Workspace top bar with breadcrumb 'Çalışma alanı / Genel bakış', compact search field 'Varlık, piyasa veya konu ara…', notification icon and date '30 Eyl 2026'. Compact page heading 'Piyasa görünümü', subline 'Farklı piyasalar. Daha bilinçli kararlar.' At right a compact dark outlined 'Görünümü düzenle' and small chartreuse '+ Yeni karşılaştırma' action.
+
+UPPER MARKET STRIP:
+Five beautifully composed small cards in one row, each containing small asset-class label, primary asset symbol/name, clear price, subdued daily change and delicate sparkline. Include:
+'KRİPTO' / Bitcoin / '$83.516,80' / '-0,06%'
+'EMTİA' / Altın / '$2.635,40' / '+0,82%'
+'HİSSE' / Apple / '$227,52' / '+1,24%'
+'ENDEKS' / S&P 500 / '5.738,17' / '+0,45%'
+'DÖVİZ' / EUR/USD / '1,1162' / '-0,18%'
+These are mock data. Each card should feel carefully designed, not bulky.
+
+MAIN ROW:
+LEFT about 65% width: a large beautifully designed chart panel titled 'Piyasaları karşılaştır'. A small explanatory label 'Başlangıç değeri: 100 · USD bazında'. Tiny chips with colored dots 'Bitcoin', 'Altın', 'S&P 500', 'BIST 100'; a tiny + chip to add another asset. Compact period controls '1H', '1A' selected, '3A', '1Y'. Plot FOUR expertly composed thin naturally varying performance lines, each starting from the same 100 baseline, ending at varied levels around 104–112. No exaggerated mountains or glows. Fine realistic market variation, restrained sparse horizontal guides, right axis values '95', '100', '105', '110', '115'; four readable dates '1 Eyl', '10 Eyl', '20 Eyl', '30 Eyl'. Tiny label at each line's endpoint, subtle cursor selection and one compact informative tooltip. Very faint localized transparent area under one selected line allowed but no shiny effect. Below plot, integrated refined comparison strip with aligned columns 'Varlık', 'Dönem getirisi', 'Oynaklık', 'En büyük düşüş'. Four compact rows corresponding to selected assets, using the same period and colors. Positive returns and negative drawdowns clearly distinct. This is the primary visual focus and feels genuinely useful.
+
+RIGHT about 35% width: rich editorial analysis panel with title 'Bu hareket ne anlatıyor?' and a small '22:45' timestamp. Subtle narrow topic tags 'Makro', 'Emtia', 'Hisseler'. Three concise beautifully typeset insight entries separated by hairline rules; every entry has a small icon, title, two short lines and an understated 'Dayanakları gör ↗' link. Use the following copy:
+'Altın pozitif ayrışıyor'
+'Güçlü fiyat seyri, daha düşük oynaklıkla birlikte izleniyor.'
+Small contextual label 'İzlenecek: faiz beklentileri'
+'Teknoloji hisseleri öne çıkıyor'
+'Fiyat hareketini bilanço beklentileriyle birlikte değerlendirin.'
+Small contextual label 'İzlenecek: şirket sonuçları'
+'Kriptoda oynaklık yüksek'
+'Kısa vadeli hareketler, daha geniş bir risk aralığına işaret ediyor.'
+Small contextual label 'İzlenecek: hacim ve likidite'
+Use small source-type chips 'Fiyat', 'Hacim', 'Haber akışı' rather than fake citations. Make the prose legible and beautifully spaced; this is a core product function.
+
+LOWER ROW:
+Wide left 70% panel titled 'İncelenecek varlıklar'. Small category tabs 'Tümü', 'Kripto', 'Hisse', 'Emtia', 'Döviz', 'Fon'. Sophisticated financial table with headers 'Varlık', 'Fiyat', '1 aylık getiri', 'Oynaklık', 'Kısa yorum'. Four or five tidy rows representing multiple asset classes: Bitcoin, Altın, Apple, S&P 500, EUR/USD. Tiny flat asset logos and class subtitle, tabular prices, green or coral percentage, understated risk bar with 'Yüksek', 'Orta', 'Düşük', and short meaningful comments such as 'Hacim takibi önemli', 'Pozitif ayrışma', 'Bilanço gündemde', 'Geniş piyasa görünümü', 'Faiz farkına duyarlı'. Small favorite star and compare checkbox, row separator, tiny performance sparkline where room allows. No buy/sell buttons and no unexplained overall investment score.
+Narrow right 30% panel titled 'Piyasalar arası görünüm'. Beautiful labeled compact horizontal bar visualization for 'Emtia', 'Hisseler', 'Kripto', 'Döviz' showing their relative monthly performance with elegant muted class colors. Below it a small section 'İzlenecek gelişmeler' with two compact icon-and-text rows 'Merkez bankası kararları' and 'Şirket bilançoları', and a quiet text link 'Takvimi aç ↗'. No enormous decorative illustration.
+
+BOTTOM: a tiny readable footer 'Tasarım önizlemesi · Örnek veriler' and PHANFORA brand signature. All displayed figures and opinions are illustrative mockup content, not actual current market reporting.
+The result must convey cross-asset discovery, comparison and thoughtful interpretation at first glance. Preserve modern visual richness and detailed professional craft from the reference, with an entirely rethought interface for investment decisions. Correct Turkish text, finely aligned values, small elegant buttons, coherent hierarchy, outstanding visual quality.

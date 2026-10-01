@@ -27,6 +27,39 @@ describe('keyless market providers', () => {
     expect(fetcher).toHaveBeenCalledTimes(result.length);
   });
 
+  it('discovers additional USD pairs and loads a selected asset beyond the defaults', async () => {
+    const fetcher = vi.fn(async (input: URL | RequestInfo) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith('/AssetPairs')) {
+        return new Response(JSON.stringify({ error: [], result: {
+          'DOGE/USD': { base: 'DOGE', quote: 'USD', status: 'online' },
+          'ETH/EUR': { base: 'ETH', quote: 'EUR', status: 'online' },
+        } }));
+      }
+      const pair = url.searchParams.get('pair');
+      return new Response(JSON.stringify({ error: [], result: { [pair!]: candles } }));
+    });
+    const provider = new KrakenMarketDataProvider({ fetch: fetcher as typeof fetch });
+    expect(await provider.listAssets()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'crypto:doge-usd', symbol: 'DOGE' }),
+    ]));
+    const candidates = await provider.getCandidates('daily', ['crypto:doge-usd']);
+    expect(candidates.some((item) => item.asset.id === 'crypto:doge-usd')).toBe(true);
+    expect(candidates.some((item) => item.asset.symbol === 'ETH/EUR')).toBe(false);
+    expect(fetcher.mock.calls.some(([input]) => new URL(String(input)).searchParams.get('pair') === 'DOGE/USD')).toBe(true);
+  });
+
+  it('keeps default prices available when the asset catalog temporarily fails', async () => {
+    const provider = new KrakenMarketDataProvider({ fetch: async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith('/AssetPairs')) return new Response('', { status: 503 });
+      const pair = url.searchParams.get('pair');
+      return new Response(JSON.stringify({ error: [], result: { [pair!]: candles } }));
+    } });
+    const candidates = await provider.getCandidates('daily', ['crypto:doge-usd']);
+    expect(candidates.map((item) => item.asset.id)).toContain('crypto:btc-usd');
+  });
+
   it('rejects malformed Kraken bars instead of inventing a price', async () => {
     const provider = new KrakenMarketDataProvider({ fetch: async () => new Response(JSON.stringify({ error: [], result: { 'BTC/USD': [[1, '0', '0', '0', 'garbage', '0', '0', 1]] } })) });
     await expect(provider.getCandidates('daily')).rejects.toMatchObject({ code: 'MARKET_DATA_UNAVAILABLE' } satisfies Partial<MarketDataError>);

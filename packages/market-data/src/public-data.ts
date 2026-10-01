@@ -6,6 +6,8 @@ import { MarketDataError } from './twelve-data';
 type ProviderOptions = { fetch?: typeof fetch; clock?: () => string; ttlMs?: number };
 type KrakenBar = [number, string, string, string, string, string, string, number];
 type KrakenResponse = { error?: string[]; result?: Record<string, KrakenBar[] | number> };
+type KrakenPair = { base?: string; quote?: string; status?: string; aclass_base?: string };
+type KrakenPairsResponse = { error?: string[]; result?: Record<string, KrakenPair> };
 
 const ASSETS = [
   { id: 'crypto:btc-usd', symbol: 'BTC', name: 'Bitcoin', assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
@@ -14,6 +16,11 @@ const ASSETS = [
   { id: 'crypto:xrp-usd', symbol: 'XRP', name: 'XRP', assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
   { id: 'crypto:ada-usd', symbol: 'ADA', name: 'Cardano', assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
 ] as const satisfies readonly CanonicalAsset[];
+const POPULAR_NAMES: Record<string, string> = {
+  DOGE: 'Dogecoin', AVAX: 'Avalanche', LINK: 'Chainlink', DOT: 'Polkadot',
+  LTC: 'Litecoin', BCH: 'Bitcoin Cash', UNI: 'Uniswap', AAVE: 'Aave',
+  ARB: 'Arbitrum', OP: 'Optimism', PEPE: 'Pepe', SHIB: 'Shiba Inu',
+};
 
 const INTERVAL: Record<Horizon, number> = { daily: 15, weekly: 60, monthly: 1440 };
 const BAR_COUNT: Record<Horizon, number> = { daily: 97, weekly: 169, monthly: 31 };
@@ -24,27 +31,59 @@ export class KrakenMarketDataProvider implements MarketDataProvider {
   private readonly fetcher: typeof fetch;
   private readonly clock: () => string;
   private readonly ttlMs: number;
-  private readonly cache = new Map<Horizon, { expires: number; value: readonly MarketCandidate[] }>();
-  private readonly pending = new Map<Horizon, Promise<readonly MarketCandidate[]>>();
+  private readonly cache = new Map<string, { expires: number; value: MarketCandidate }>();
+  private readonly pending = new Map<string, Promise<MarketCandidate>>();
+  private catalog: { expires: number; value: readonly CanonicalAsset[] } | null = null;
+  private catalogPending: Promise<readonly CanonicalAsset[]> | null = null;
   constructor(options: ProviderOptions = {}) {
     this.fetcher = options.fetch ?? fetch;
     this.clock = options.clock ?? (() => new Date().toISOString());
     this.ttlMs = options.ttlMs ?? 60_000;
   }
-  async listAssets() { return ASSETS; }
-  async getAsset(id: string) { const asset = ASSETS.find((item) => item.id === id); if (!asset) throw new Error('ASSET_NOT_FOUND'); return asset; }
-  async getCandidates(horizon: Horizon): Promise<readonly MarketCandidate[]> {
+  async listAssets(): Promise<readonly CanonicalAsset[]> {
     const now = Date.parse(this.clock());
-    const cached = this.cache.get(horizon);
-    if (cached && now < cached.expires) return cached.value;
-    const pending = this.pending.get(horizon);
-    if (pending) return pending;
-    const task = this.load(horizon).then((value) => { this.cache.set(horizon, { expires: now + this.ttlMs, value }); return value; }).finally(() => this.pending.delete(horizon));
-    this.pending.set(horizon, task);
+    if (this.catalog && now < this.catalog.expires) return this.catalog.value;
+    if (this.catalogPending) return this.catalogPending;
+    const task = this.loadCatalog()
+      .then((value) => { this.catalog = { expires: now + 3_600_000, value }; return value; })
+      .finally(() => { this.catalogPending = null; });
+    this.catalogPending = task;
     return task;
   }
-  private async load(horizon: Horizon): Promise<readonly MarketCandidate[]> {
-    const results = await Promise.allSettled(ASSETS.map((asset) => this.loadAsset(asset, horizon)));
+  private async loadCatalog(): Promise<readonly CanonicalAsset[]> {
+    const url = new URL('https://api.kraken.com/0/public/AssetPairs');
+    url.searchParams.set('assetVersion', '1');
+    let response: Response;
+    try { response = await this.fetcher(url, { signal: AbortSignal.timeout(8000) }); }
+    catch { throw new MarketDataError('MARKET_DATA_UNAVAILABLE'); }
+    if (response.status === 429) throw new MarketDataError('MARKET_DATA_RATE_LIMITED');
+    if (!response.ok) throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+    const payload = await response.json() as KrakenPairsResponse;
+    if (payload.error?.length || !payload.result) throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+    const defaults = new Set<string>(ASSETS.map((asset) => asset.id));
+    const additional = Object.values(payload.result).flatMap((pair): CanonicalAsset[] => {
+      const symbol = pair.base?.toUpperCase();
+      if (pair.quote !== 'USD' || pair.status !== 'online' || (pair.aclass_base && pair.aclass_base !== 'currency') || !symbol || !/^[A-Z0-9]{2,12}$/.test(symbol) || symbol === 'USD') return [];
+      const id = `crypto:${symbol.toLowerCase()}-usd`;
+      if (defaults.has(id)) return [];
+      return [{ id, symbol, name: POPULAR_NAMES[symbol] ?? symbol, assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'medium' }];
+    });
+    const unique = new Map(additional.map((asset) => [asset.id, asset]));
+    return [...ASSETS, ...[...unique.values()].sort((a, b) => a.symbol.localeCompare(b.symbol))];
+  }
+  async getAsset(id: string) {
+    const asset = ASSETS.find((item) => item.id === id) ?? (await this.listAssets()).find((item) => item.id === id);
+    if (!asset) throw new Error('ASSET_NOT_FOUND');
+    return asset;
+  }
+  async getCandidates(horizon: Horizon, assetIds: readonly string[] = []): Promise<readonly MarketCandidate[]> {
+    let catalog: readonly CanonicalAsset[] = ASSETS;
+    if (assetIds.length) {
+      try { catalog = await this.listAssets(); }
+      catch { catalog = this.catalog?.value ?? ASSETS; }
+    }
+    const requested = catalog.filter((asset) => assetIds.includes(asset.id) && !ASSETS.some((known) => known.id === asset.id));
+    const results = await Promise.allSettled([...ASSETS, ...requested].map((asset) => this.cachedAsset(asset, horizon)));
     const candidates = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
     if (!candidates.length) {
       const limited = results.some((result) => result.status === 'rejected' && result.reason instanceof MarketDataError && result.reason.code === 'MARKET_DATA_RATE_LIMITED');
@@ -52,7 +91,20 @@ export class KrakenMarketDataProvider implements MarketDataProvider {
     }
     return candidates;
   }
-  private async loadAsset(asset: typeof ASSETS[number], horizon: Horizon): Promise<MarketCandidate> {
+  private async cachedAsset(asset: CanonicalAsset, horizon: Horizon): Promise<MarketCandidate> {
+    const key = `${horizon}:${asset.id}`;
+    const now = Date.parse(this.clock());
+    const cached = this.cache.get(key);
+    if (cached && now < cached.expires) return cached.value;
+    const pending = this.pending.get(key);
+    if (pending) return pending;
+    const task = this.loadAsset(asset, horizon)
+      .then((value) => { this.cache.set(key, { expires: now + this.ttlMs, value }); return value; })
+      .finally(() => { this.pending.delete(key); });
+    this.pending.set(key, task);
+    return task;
+  }
+  private async loadAsset(asset: CanonicalAsset, horizon: Horizon): Promise<MarketCandidate> {
     const url = new URL('https://api.kraken.com/0/public/OHLC');
     url.searchParams.set('pair', `${asset.symbol}/USD`);
     url.searchParams.set('assetVersion', '1');

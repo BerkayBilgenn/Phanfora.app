@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 
 import "./globals.css";
+import "./overview.css";
 
 export const metadata: Metadata = {
   title: "Phanfora — Piyasa Kontrol Merkezi",

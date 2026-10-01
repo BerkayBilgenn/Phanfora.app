@@ -1,5 +1,6 @@
 import { formatMoney } from '@phanfora/currency';
 import type { ScoreResult } from '@phanfora/domain';
+import { AssetLogoBadge } from './asset-logo';
 
 const assetClassLabel = {
   stock: 'Hisse', crypto: 'Kripto', commodity: 'Emtia', forex: 'Döviz', index: 'Endeks',
@@ -11,7 +12,7 @@ export function AssetCard({ result, rank }: { result: ScoreResult; rank: number 
     <article className="alternative-card">
       <div className="alternative-rank">0{rank}</div>
       <div className="asset-identity compact">
-        <span className="symbol-box">{result.asset.symbol.slice(0, 3)}</span>
+        <AssetLogoBadge symbol={result.asset.symbol} assetClass={result.asset.assetClass} size={42} className="symbol-box" />
         <div><strong>{result.asset.name}</strong><small>{assetClassLabel[result.asset.assetClass]} · {result.asset.exchangeOrVenue}</small></div>
       </div>
       <div className="alternative-values">

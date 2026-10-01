@@ -117,6 +117,8 @@ main { min-block-size: calc(100dvh - 72px); }
 .asset-identity { display: flex; gap: 14px; align-items: center; min-inline-size: 0; }
 .symbol-box { flex: 0 0 auto; inline-size: 42px; block-size: 42px; display: grid; place-items: center; border: 1px solid rgba(131,201,173,.22); border-radius: 10px; background: #17231f; color: var(--action); font-size: 11px; font-weight: 650; letter-spacing: -.02em; }
 .symbol-box.large { inline-size: 56px; block-size: 56px; font-size: 13px; }
+.symbol-box.has-logo, .workspace-symbol.has-logo { border-color: transparent; background: transparent; }
+.ph-asset-logo-image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .asset-identity h2 { margin: 0; font-size: clamp(26px, 3vw, 38px); font-weight: 550; line-height: 1.15; letter-spacing: -.035em; }
 .asset-identity h2 small { margin-inline-start: 6px; color: var(--text-muted); font-size: 13px; font-weight: 550; letter-spacing: .02em; }
 .asset-identity p, .asset-identity small { margin: 5px 0 0; display: block; color: var(--text-secondary); font-size: 12px; }
@@ -532,3 +534,10 @@ body { background: #031723; color: #e8f1ff; font-family: Arial, Helvetica, ui-sa
 .workspace-analysis-detail > div { padding: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid #164254; }
 .workspace-analysis-detail strong { min-width: 110px; color: #ecf6fd; }
 @media (max-width: 700px) { .workspace-analysis-detail { padding-left: 0; } }
+@media (max-width: 600px) {
+  .analysis-panel-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .analysis-fields { grid-template-columns: minmax(0, 1fr); }
+  .analysis-panel-foot { flex-wrap: wrap; gap: 6px 16px; }
+  .workspace-analysis-form .analysis-panel { padding: 18px 0 4px; }
+  .analysis-dialog .analysis-panel { padding: 18px; }
+}

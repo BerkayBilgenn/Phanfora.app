@@ -2,6 +2,7 @@ import { formatMoney } from '@phanfora/currency';
 import type { AnalysisResult } from '@phanfora/domain';
 
 import { messages } from '../lib/messages';
+import { AssetLogoBadge } from './asset-logo';
 
 import { AssetCard } from './asset-card';
 import { PriceChart } from './price-chart';
@@ -45,7 +46,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
           </div>
           <div className="primary-heading">
             <div className="asset-identity">
-              <span className="symbol-box large">{primary.asset.symbol.slice(0, 3)}</span>
+              <AssetLogoBadge symbol={primary.asset.symbol} assetClass={primary.asset.assetClass} size={56} className="symbol-box large" />
               <div>
                 <h2>{primary.asset.name} <small>{primary.asset.symbol}</small></h2>
                 <p>{assetClassLabel[primary.asset.assetClass]} · {primary.asset.exchangeOrVenue} · {primary.marketStatus === 'continuous' ? 'Kesintisiz piyasa' : primary.marketStatus === 'open' ? 'Piyasa açık' : 'Piyasa kapalı'}</p>

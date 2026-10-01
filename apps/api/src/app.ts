@@ -9,6 +9,7 @@ import { AnalysisService } from '@phanfora/analysis';
 import {
   CreateAnalysisBodySchema,
   IdempotencyHeadersSchema,
+  MarketQuotesBodySchema,
   MarketQuotesQuerySchema,
   type CreateAnalysisBody,
   type IdempotencyHeaders,
@@ -20,12 +21,14 @@ import {
   type MarketDataProvider,
 } from '@phanfora/market-data';
 import Fastify, { type FastifyServerOptions } from 'fastify';
+import { createNewsService } from './news';
 
 export interface BuildAppOptions extends FastifyServerOptions {
   allowedOrigins?: readonly string[];
   marketData?: MarketDataProvider;
   fxRates?: FxRateProvider;
   providerMode?: 'fixture' | 'live' | 'public';
+  news?: ReturnType<typeof createNewsService>;
 }
 
 function marketDataNotConfigured(): never {
@@ -49,6 +52,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     marketData = new UnconfiguredMarketDataProvider(),
     fxRates = new UnconfiguredFxRateProvider(),
     providerMode = 'live',
+    news = createNewsService(),
     ...fastifyOptions
   } = options;
   const providerConfigured = options.marketData !== undefined && options.fxRates !== undefined;
@@ -112,6 +116,15 @@ export function buildApp(options: BuildAppOptions = {}) {
     items: await marketData.getCandidates(request.query.horizon ?? 'daily'),
     dataMode: providerMode,
   }));
+
+  app.post('/v1/market/quotes', {
+    schema: { body: MarketQuotesBodySchema },
+  }, async (request) => ({
+    items: await marketData.getCandidates(request.body.horizon, request.body.assetIds),
+    dataMode: providerMode,
+  }));
+
+  app.get('/v1/news', async () => news.getNews());
 
   app.post<{
     Body: CreateAnalysisBody;

@@ -1,0 +1,22 @@
+Use case: ui-mockup, targeted revision.
+Edit the supplied PHANFORA multi-asset investment dashboard mockup. Keep the sophisticated detailed charcoal design, overall layout, main comparative chart, all chart data, asset table, typography, market ticker cards, top-right explanatory insights, small controls, and brand intact. Do not restyle or simplify the interface. Preserve all existing content except the specifically requested changes below.
+
+CHANGE 1 — NO ORDER BOOK:
+This product must have no order book, no bid/ask panel, no market depth panel and no trade execution tools. The supplied base already respects this; preserve that.
+
+CHANGE 2 — LIVE NEWS ON THE HOME DASHBOARD:
+Replace ONLY the two stacked lower-right sections currently titled 'Piyasalar arası görünüm' and 'İzlenecek gelişmeler' with ONE beautifully crafted continuous news feed panel filling their combined space.
+Panel heading exactly 'Anlık haberler', a tiny green status dot, and understated 'Tüm haberler ↗' link.
+Directly below heading add compact subtle category tabs 'Tümü', 'Makro', 'Hisse', 'Kripto', 'Emtia'.
+Render four well-composed dense news rows separated by fine rules. Each has a small relative timestamp, understated category badge, short readable headline, and tiny related-asset tags. Keep icons very small and use sophisticated type hierarchy. No big photos, no enormous padding, no blocky colorful badges. This must look like a genuinely useful live financial news feed within a polished real product.
+Example rows:
+'2 dk' | 'Makro' | 'ABD enflasyonu: piyasalar hangi veriyi izleyecek?' | tags 'USD', 'Altın', 'S&P 500'
+'6 dk' | 'Hisse' | 'Teknoloji hisselerinde bilanço gündemi' | tags 'AAPL', 'MSFT'
+'11 dk' | 'Kripto' | 'Bitcoin: işlem hacmi ve fiyat hareketi' | tag 'BTC'
+'18 dk' | 'Emtia' | 'Altın piyasasında faiz beklentileri' | tags 'XAU/USD', 'Fed'
+Use very small generic source placeholder 'Haber kaynağı' in muted text where natural, never attribute invented headlines to a real publisher. Add a tiny unobtrusive 'Örnek haber akışı' note at the bottom of this panel. User is reviewing a design mockup, not real news.
+
+CHANGE 3 — MARKET MAP MOVES TO ITS OWN PAGE:
+Add a new sidebar navigation entry 'Piyasa haritası' with a refined small grid/heatmap icon between 'Piyasalar' and 'Keşfet'. Keep 'Genel bakış' selected. The heatmap or market-map content itself must not appear anywhere on this home screen.
+
+Everything else must remain visually unchanged: 'Piyasa görünümü' title, 5 cross-asset cards, normalized comparison chart and performance table, top-right 'Bu hareket ne anlatıyor?' insight panel, lower-left 'İncelenecek varlıklar' table. Preserve Turkish typography, legible labels, aligned numbers, refined dark materials and restrained chartreuse accent. Keep tiny footer 'Tasarım önizlemesi · Örnek veriler'. Output ONE full-screen flat UI screenshot at the same aspect ratio, as sharp as possible.

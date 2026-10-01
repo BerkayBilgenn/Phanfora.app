@@ -9,7 +9,7 @@ import type {
 
 export interface MarketDataProvider {
   listAssets(): Promise<readonly CanonicalAsset[]>;
-  getCandidates(horizon: Horizon): Promise<readonly MarketCandidate[]>;
+  getCandidates(horizon: Horizon, assetIds?: readonly string[]): Promise<readonly MarketCandidate[]>;
   getAsset(id: string): Promise<CanonicalAsset>;
 }
 

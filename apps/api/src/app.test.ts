@@ -56,6 +56,47 @@ describe('Phanfora API', () => {
     });
   });
 
+  it('passes a personal asset selection to the quote provider', async () => {
+    const fixtureMarket = new FixtureMarketDataProvider();
+    let receivedIds: readonly string[] | undefined;
+    const marketData: MarketDataProvider = {
+      listAssets: () => fixtureMarket.listAssets(),
+      getAsset: (id) => fixtureMarket.getAsset(id),
+      getCandidates: (horizon, assetIds) => {
+        receivedIds = assetIds;
+        return fixtureMarket.getCandidates(horizon);
+      },
+    };
+    const instance = buildApp({
+      logger: false,
+      marketData,
+      fxRates: new FixtureFxRateProvider(),
+      providerMode: 'fixture',
+    });
+    apps.push(instance);
+    const response = await instance.inject({
+      method: 'POST', url: '/v1/market/quotes',
+      payload: { horizon: 'daily', assetIds: ['crypto:doge-usd'] },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().dataMode).toBe('fixture');
+    expect(receivedIds).toEqual(['crypto:doge-usd']);
+  });
+
+  it('serves source attributed news through the public endpoint', async () => {
+    const instance = buildApp({
+      logger: false,
+      news: { getNews: async () => ({
+        items: [{ title: 'A real headline', url: 'https://www.eia.gov/story', publishedAt: '2026-10-01T08:00:00.000Z', category: 'commodity' as const, source: 'EIA' }],
+        updatedAt: '2026-10-01T08:01:00.000Z', stale: false, unavailableSources: [],
+      }) },
+    });
+    apps.push(instance);
+    const response = await instance.inject({ method: 'GET', url: '/v1/news' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().items[0]).toMatchObject({ source: 'EIA', category: 'commodity' });
+  });
+
   it('rejects unsupported quote horizons and unavailable providers', async () => {
     const invalid = await app().inject({ method: 'GET', url: '/v1/market/quotes?horizon=yearly' });
     expect(invalid.statusCode).toBe(400);

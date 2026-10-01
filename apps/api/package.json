@@ -19,6 +19,7 @@
     "@phanfora/contracts": "workspace:*",
     "@phanfora/domain": "workspace:*",
     "@phanfora/market-data": "workspace:*",
-    "fastify": "^5.6.0"
+    "fastify": "^5.6.0",
+    "saxes": "^6.0.0"
   }
 }

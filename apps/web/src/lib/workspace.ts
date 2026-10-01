@@ -4,13 +4,14 @@ export type Holding = { id: string; assetId: string; quantity: number; costBasis
 export type PriceAlert = { id: string; assetId: string; direction: 'above' | 'below'; threshold: number; enabled: boolean };
 export type Workspace = {
   watchlist: string[];
+  overviewAssetIds: string[] | null;
   holdings: Holding[];
   alerts: PriceAlert[];
   analyses: AnalysisResult[];
   settings: { horizon: Horizon; riskProfile: RiskProfile; refreshSeconds: number };
 };
 const KEY = 'phanfora:workspace:v1';
-export const emptyWorkspace: Workspace = { watchlist: [], holdings: [], alerts: [], analyses: [], settings: { horizon: 'daily', riskProfile: 'balanced', refreshSeconds: 60 } };
+export const emptyWorkspace: Workspace = { watchlist: [], overviewAssetIds: null, holdings: [], alerts: [], analyses: [], settings: { horizon: 'daily', riskProfile: 'balanced', refreshSeconds: 60 } };
 
 export function workspaceSnapshot() { return typeof window === 'undefined' ? '' : localStorage.getItem(KEY) ?? ''; }
 export function subscribeWorkspace(listener: () => void) {
@@ -22,7 +23,13 @@ export function parseWorkspace(raw: string): Workspace {
   try {
     const value = JSON.parse(raw || 'null') as Partial<Workspace> | null;
     if (!value || !Array.isArray(value.watchlist) || !Array.isArray(value.holdings) || !Array.isArray(value.alerts) || !Array.isArray(value.analyses)) return structuredClone(emptyWorkspace);
-    return { ...structuredClone(emptyWorkspace), ...value, settings: { ...emptyWorkspace.settings, ...value.settings } };
+    return {
+      ...structuredClone(emptyWorkspace), ...value,
+      overviewAssetIds: Array.isArray(value.overviewAssetIds)
+        ? [...new Set(value.overviewAssetIds.filter((id): id is string => typeof id === 'string'))]
+        : null,
+      settings: { ...emptyWorkspace.settings, ...value.settings },
+    };
   } catch { return structuredClone(emptyWorkspace); }
 }
 export function loadWorkspace(): Workspace { return parseWorkspace(workspaceSnapshot()); }
@@ -32,6 +39,14 @@ export function saveWorkspace(value: Workspace) {
 }
 export function addWatch(value: Workspace, assetId: string): Workspace {
   return value.watchlist.includes(assetId) ? value : { ...value, watchlist: [...value.watchlist, assetId] };
+}
+export function addOverviewAsset(value: Workspace, assetId: string, defaults: readonly string[]): Workspace {
+  const current = value.overviewAssetIds ?? defaults;
+  return current.includes(assetId) ? value : { ...value, overviewAssetIds: [...current, assetId] };
+}
+export function removeOverviewAsset(value: Workspace, assetId: string, defaults: readonly string[]): Workspace {
+  const current = value.overviewAssetIds ?? defaults;
+  return { ...value, overviewAssetIds: current.filter((id) => id !== assetId) };
 }
 export function addHolding(value: Workspace, holding: Holding): Workspace {
   if (!holding.assetId || !Number.isFinite(holding.quantity) || holding.quantity <= 0 || !Number.isFinite(holding.costBasis) || holding.costBasis < 0) throw new Error('Geçerli bir miktar ve alış fiyatı gir.');
