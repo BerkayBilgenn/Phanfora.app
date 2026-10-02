@@ -72,9 +72,23 @@ const LIVE_ASSETS = Object.freeze([
   { id: 'crypto:eth-usd', providerSymbol: 'ETH/USD', symbol: 'ETH', name: 'Ethereum', assetClass: 'crypto', exchangeOrVenue: 'Binance', quoteCurrency: 'USD', liquidityTier: 'high' },
   { id: 'stock:aapl-xnas', providerSymbol: 'AAPL', symbol: 'AAPL', name: 'Apple Inc.', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
   { id: 'stock:msft-xnas', providerSymbol: 'MSFT', symbol: 'MSFT', name: 'Microsoft Corp.', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'stock:nvda-xnas', providerSymbol: 'NVDA', symbol: 'NVDA', name: 'NVIDIA Corp.', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'stock:googl-xnas', providerSymbol: 'GOOGL', symbol: 'GOOGL', name: 'Alphabet Inc.', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'stock:amzn-xnas', providerSymbol: 'AMZN', symbol: 'AMZN', name: 'Amazon.com Inc.', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'stock:tsla-xnas', providerSymbol: 'TSLA', symbol: 'TSLA', name: 'Tesla Inc.', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'stock:meta-xnas', providerSymbol: 'META', symbol: 'META', name: 'Meta Platforms', assetClass: 'stock', exchangeOrVenue: 'NASDAQ', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'stock:thyao-xist', providerSymbol: 'THYAO:XIST', symbol: 'THYAO', name: 'Türk Hava Yolları', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high' },
+  { id: 'stock:garan-xist', providerSymbol: 'GARAN:XIST', symbol: 'GARAN', name: 'Garanti BBVA', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high' },
+  { id: 'stock:akbnk-xist', providerSymbol: 'AKBNK:XIST', symbol: 'AKBNK', name: 'Akbank', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high' },
+  { id: 'stock:eregl-xist', providerSymbol: 'EREGL:XIST', symbol: 'EREGL', name: 'Ereğli Demir Çelik', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high' },
+  { id: 'stock:bimas-xist', providerSymbol: 'BIMAS:XIST', symbol: 'BIMAS', name: 'BİM Birleşik Mağazalar', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high' },
   { id: 'forex:eur-usd', providerSymbol: 'EUR/USD', symbol: 'EUR/USD', name: 'Euro / US Dollar', assetClass: 'forex', exchangeOrVenue: 'Global FX', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'forex:usd-try', providerSymbol: 'USD/TRY', symbol: 'USD/TRY', name: 'ABD Doları / Türk Lirası', assetClass: 'forex', exchangeOrVenue: 'Global FX', quoteCurrency: 'TRY', liquidityTier: 'high' },
   { id: 'commodity:xau-usd', providerSymbol: 'XAU/USD', symbol: 'XAU', name: 'Gold Spot', assetClass: 'commodity', exchangeOrVenue: 'Global spot', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'commodity:xag-usd', providerSymbol: 'XAG/USD', symbol: 'XAG', name: 'Silver Spot', assetClass: 'commodity', exchangeOrVenue: 'Global spot', quoteCurrency: 'USD', liquidityTier: 'high' },
 ] satisfies readonly LiveAsset[]);
+
+export const TWELVE_PROVIDER_SYMBOLS = LIVE_ASSETS.map((asset) => asset.providerSymbol);
 
 const horizonRequest = Object.freeze({
   daily: { interval: '15min', outputsize: '97' },

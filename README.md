@@ -15,7 +15,7 @@ Bu repo `app.phanfora.com` uygulamasını içerir. Tanıtım sitesi `phanfora.co
 
 ## Piyasa verisi
 
-`TWELVE_DATA_API_KEY` sunucu ortamında varsa hisse, kripto, emtia ve döviz için Twelve Data kullanılır. Anahtar yoksa Kraken'in açık spot OHLC uç noktasıyla BTC, ETH, SOL, XRP ve ADA fiyatları; döviz dönüşümlerinde Frankfurter'ın günlük kurları kullanılır. Anahtarsız mod hisse, endeks veya emtia verisi sunmaz. Ekran, mevcut veri kaynağını ve gözlem zamanını belirtir; sağlayıcı erişilemezse fiyat oluşturmaz.
+`TWELVE_DATA_API_KEY` varsa ABD/BIST ve spot madenler Twelve Data ile de birleşir. Anahtar yoksa ABD ve Borsa İstanbul hisseleri Yahoo Finance gecikmeli grafikten gelir; kripto Kraken/Binance canlı; TCMB günlük resmi kurlardır. Frankfurter analiz kur dönüşümünde kullanılır. Rozetler verinin canlı, gecikmeli, günlük veya eski olduğunu gösterir.
 
 ```bash
 TWELVE_DATA_API_KEY=... pnpm dev
@@ -81,7 +81,7 @@ packages/
   domain/       Kanonik finans ve analiz tipleri
   contracts/    Sürümlenebilir API şemaları
   currency/     ISO 4217 kataloğu ve hassas kur dönüşümü
-  market-data/  Twelve Data, Kraken, Frankfurter ve test fixture sağlayıcıları
+  market-data/  Twelve Data, Kraken, Binance, TCMB, Frankfurter ve test fixture sağlayıcıları
   scoring/      Deterministik Phanfora Skoru v1
   analysis/     Tarama ve sıralama orkestrasyonu
 ```

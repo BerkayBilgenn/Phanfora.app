@@ -18,8 +18,12 @@ export interface FxRateProvider {
   getRates(baseCurrency: string, quoteCurrencies?: readonly string[]): Promise<FxRateSnapshot>;
 }
 
-export { MarketDataError, TwelveDataProvider } from './twelve-data';
+export { MarketDataError, TwelveDataProvider, TWELVE_PROVIDER_SYMBOLS } from './twelve-data';
 export { KrakenMarketDataProvider, FrankfurterFxRateProvider } from './public-data';
+export { BinanceMarketDataProvider } from './binance';
+export { TcmbDailyFxProvider } from './tcmb';
+export { CompositeMarketDataProvider } from './composite';
+export { YahooDelayedEquityProvider } from './yahoo-equity';
 
 const assets = Object.freeze([
   { id: 'crypto:btc-usd', symbol: 'BTC', name: 'Bitcoin', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high' },

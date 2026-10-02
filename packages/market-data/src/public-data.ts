@@ -15,6 +15,7 @@ const ASSETS = [
   { id: 'crypto:sol-usd', symbol: 'SOL', name: 'Solana', assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
   { id: 'crypto:xrp-usd', symbol: 'XRP', name: 'XRP', assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
   { id: 'crypto:ada-usd', symbol: 'ADA', name: 'Cardano', assetClass: 'crypto', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
+  { id: 'forex:eur-usd', symbol: 'EUR/USD', name: 'Euro / US Dollar', assetClass: 'forex', exchangeOrVenue: 'Kraken', quoteCurrency: 'USD', liquidityTier: 'high' },
 ] as const satisfies readonly CanonicalAsset[];
 const POPULAR_NAMES: Record<string, string> = {
   DOGE: 'Dogecoin', AVAX: 'Avalanche', LINK: 'Chainlink', DOT: 'Polkadot',
@@ -26,6 +27,9 @@ const INTERVAL: Record<Horizon, number> = { daily: 15, weekly: 60, monthly: 1440
 const BAR_COUNT: Record<Horizon, number> = { daily: 97, weekly: 169, monthly: 31 };
 function score(value: number) { return Math.max(0, Math.min(100, Math.round(value))); }
 function number(value: unknown) { const parsed = Number(value); if (!Number.isFinite(parsed)) throw new MarketDataError('MARKET_DATA_UNAVAILABLE'); return parsed; }
+function krakenPair(asset: CanonicalAsset) {
+  return asset.symbol.includes('/') ? asset.symbol : `${asset.symbol}/USD`;
+}
 
 export class KrakenMarketDataProvider implements MarketDataProvider {
   private readonly fetcher: typeof fetch;
@@ -106,7 +110,7 @@ export class KrakenMarketDataProvider implements MarketDataProvider {
   }
   private async loadAsset(asset: CanonicalAsset, horizon: Horizon): Promise<MarketCandidate> {
     const url = new URL('https://api.kraken.com/0/public/OHLC');
-    url.searchParams.set('pair', `${asset.symbol}/USD`);
+    url.searchParams.set('pair', krakenPair(asset));
     url.searchParams.set('assetVersion', '1');
     url.searchParams.set('interval', String(INTERVAL[horizon]));
     let response: Response;
@@ -145,12 +149,12 @@ export class KrakenMarketDataProvider implements MarketDataProvider {
     const momentum = score(50 + momentumChange * 5);
     return {
       asset,
-      price: { amount: series.at(-1)!.close, currency: 'USD' },
+      price: { amount: series.at(-1)!.close, currency: asset.quoteCurrency },
       changePercent: change.toFixed(4),
       dimensions: { trend, momentum, liquidity: score(10 + Math.log10(1 + averageTurnover) * 10), riskFit: score(100 - volatility * 1.5), marketConditions: score((trend + momentum) / 2) },
       volatility: Number(volatility.toFixed(2)),
       quality: { freshness, completeness: Math.min(1, series.length / BAR_COUNT[horizon]), integrity: 'verified' },
-      marketStatus: 'continuous', series, source: 'Kraken', observedAt,
+      marketStatus: asset.assetClass === 'crypto' ? 'continuous' : 'open', series, source: 'Kraken', observedAt,
       snapshotId: `kraken:${asset.symbol}:${observedAt}`, dataMode: freshness === 'live' ? 'live' : freshness === 'end-of-day' ? 'end-of-day' : 'delayed',
     };
   }

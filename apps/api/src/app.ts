@@ -89,7 +89,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   });
 
   app.get('/health', async () => providerConfigured
-    ? { status: 'ok', dataMode: providerMode, provider: providerMode === 'live' ? 'Twelve Data' : providerMode === 'public' ? 'Kraken + Frankfurter' : 'Fixture' }
+        ? { status: 'ok', dataMode: providerMode, provider: providerMode === 'live' ? 'Twelve Data + public venues' : providerMode === 'public' ? 'Kraken + Binance + TCMB + Yahoo Finance' : 'Fixture' }
     : {
         status: 'degraded',
         dataMode: providerMode,

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MarketDataError, TwelveDataProvider } from "./twelve-data";
+import { MarketDataError, TwelveDataProvider, TWELVE_PROVIDER_SYMBOLS } from "./twelve-data";
 
 const values = [
   {
@@ -29,14 +29,7 @@ const values = [
   },
 ];
 
-const symbols = [
-  "BTC/USD",
-  "ETH/USD",
-  "AAPL",
-  "MSFT",
-  "EUR/USD",
-  "XAU/USD",
-] as const;
+const symbols = TWELVE_PROVIDER_SYMBOLS;
 
 function success(symbol: string) {
   return {
@@ -86,7 +79,7 @@ describe("TwelveDataProvider market data", () => {
 
     const candidates = await provider(fetcher).getCandidates("daily");
 
-    expect(candidates).toHaveLength(6);
+    expect(candidates).toHaveLength(symbols.length);
     expect(new Set(candidates.map(({ asset }) => asset.assetClass))).toEqual(
       new Set(["crypto", "stock", "forex", "commodity"]),
     );
@@ -130,7 +123,7 @@ describe("TwelveDataProvider market data", () => {
 
     const candidates = await provider(fetcher).getCandidates("weekly");
 
-    expect(candidates).toHaveLength(5);
+    expect(candidates).toHaveLength(symbols.length - 1);
     expect(candidates.some(({ asset }) => asset.symbol === "MSFT")).toBe(false);
     expect(
       new URL(String(fetcher.mock.calls[0]?.[0])).searchParams.get("interval"),
@@ -161,7 +154,7 @@ describe("TwelveDataProvider market data", () => {
       vi.fn<typeof fetch>().mockResolvedValue(response(payload)),
     ).getCandidates("daily");
     expect(candidates.some(({ asset }) => asset.symbol === "AAPL")).toBe(false);
-    expect(candidates).toHaveLength(5);
+    expect(candidates).toHaveLength(symbols.length - 1);
   });
 
   it("coalesces concurrent requests and reuses successful data inside the TTL", async () => {

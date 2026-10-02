@@ -5,6 +5,10 @@ import {
   TwelveDataProvider,
   KrakenMarketDataProvider,
   FrankfurterFxRateProvider,
+  BinanceMarketDataProvider,
+  TcmbDailyFxProvider,
+  CompositeMarketDataProvider,
+  YahooDelayedEquityProvider,
 } from "@phanfora/market-data";
 
 const host = process.env.API_HOST ?? "127.0.0.1";
@@ -18,6 +22,13 @@ const allowedOrigins = (
 
 const apiKey = process.env.TWELVE_DATA_API_KEY?.trim();
 const liveProvider = apiKey ? new TwelveDataProvider({ apiKey }) : undefined;
+const publicMarketData = new CompositeMarketDataProvider([
+  new KrakenMarketDataProvider(),
+  new BinanceMarketDataProvider(),
+  new TcmbDailyFxProvider(),
+  ...(liveProvider ? [liveProvider] : []),
+  new YahooDelayedEquityProvider(),
+]);
 const e2eFixture = process.env.PHANFORA_E2E_FIXTURE === "1";
 const app = buildApp({
   allowedOrigins,
@@ -27,16 +38,10 @@ const app = buildApp({
         fxRates: new FixtureFxRateProvider(),
         providerMode: "fixture" as const,
       }
-    : liveProvider
-      ? {
-          marketData: liveProvider,
-          fxRates: liveProvider,
-          providerMode: "live" as const,
-        }
-      : {
-          marketData: new KrakenMarketDataProvider(),
-          fxRates: new FrankfurterFxRateProvider(),
-          providerMode: "public" as const,
+    : {
+          marketData: publicMarketData,
+          fxRates: liveProvider ?? new FrankfurterFxRateProvider(),
+          providerMode: liveProvider ? "live" as const : "public" as const,
         }),
 });
 
