@@ -37,6 +37,7 @@ describe('YahooDelayedEquityProvider', () => {
     expect(apple?.source).toBe('Yahoo Finance');
     expect(apple?.dataMode).not.toBe('live');
     expect(thy?.asset.exchangeOrVenue).toMatch(/İstanbul|Istanbul|BIST|XIST/i);
+    expect(quotes.find((item) => item.asset.symbol === 'BTC')?.asset.id).toBe('crypto:btc-usd');
     expect(fetcher).toHaveBeenCalled();
   });
 

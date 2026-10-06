@@ -1,21 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import type { MarketCandidate, PricePoint } from '@phanfora/domain';
+import type { Horizon, MarketCandidate, PricePoint } from '@phanfora/domain';
 import { freshnessBadge } from '../lib/freshness-label';
 import { marketTabs, matchesMarketTab, type MarketTab } from '../lib/market-tabs';
 import { exploreQuoteStats } from '../lib/explore-quote-stats';
 import { ExploreTape } from './explore-tape';
 import { Icon } from './cockpit-icons';
 import { PriceChart } from './price-chart';
+import { formatMoney } from '../lib/format-money';
 
-function money(value: number, currency = 'USD') {
-  try {
-    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: value < 2 ? 4 : 2 }).format(value);
-  } catch {
-    return `${value.toLocaleString('tr-TR', { maximumFractionDigits: value < 2 ? 4 : 2 })} ${currency}`;
-  }
-}
+const periods: { label: string; value: Horizon }[] = [
+  { label: '1G', value: 'daily' },
+  { label: '1H', value: 'weekly' },
+  { label: '1A', value: 'monthly' },
+];
 
 function percent(value: number) {
   return `${value >= 0 ? '+' : ''}${value.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}%`;
@@ -51,6 +50,8 @@ export function ExploreCockpit({
   onRefresh,
   watchlist,
   onWatch,
+  horizon,
+  onHorizonChange,
 }: {
   items: readonly MarketCandidate[];
   loading: boolean;
@@ -58,6 +59,8 @@ export function ExploreCockpit({
   onRefresh: () => void;
   watchlist: readonly string[];
   onWatch: (id: string) => void;
+  horizon: Horizon;
+  onHorizonChange: (horizon: Horizon) => void;
 }) {
   const [tab, setTab] = useState<MarketTab>('all');
   const [search, setSearch] = useState('');
@@ -131,7 +134,7 @@ export function ExploreCockpit({
                 <span className="workspace-symbol">{item.asset.symbol.slice(0, 3)}</span>
                 <span className="workspace-quote"><strong>{item.asset.symbol}</strong><small>{item.asset.name}</small></span>
                 <RowSpark series={item.series} />
-                <span className="workspace-number"><strong>{money(Number(item.price.amount), item.price.currency)}</strong><small className={Number(item.changePercent) >= 0 ? 'positive' : 'negative'}>{percent(Number(item.changePercent))}</small></span>
+                <span className="workspace-number"><strong>{formatMoney(Number(item.price.amount), item.price.currency)}</strong><small className={Number(item.changePercent) >= 0 ? 'positive' : 'negative'}>{percent(Number(item.changePercent))}</small></span>
                 <span className={`freshness-badge is-${rowBadge.tone}${rowBadge.tone === 'live' ? ' is-pip' : ''}`} aria-label={`Veri durumu: ${rowBadge.text}`}>{rowBadge.tone === 'live' ? '' : rowBadge.text}</span>
               </button>
             );
@@ -146,10 +149,25 @@ export function ExploreCockpit({
                   <h2>{selected.asset.symbol}</h2>
                   <p>{selected.asset.name} · {selected.source}</p>
                 </div>
-                {badge && <span className={`freshness-badge is-${badge.tone}`}>{badge.text}</span>}
+                <div className="explore-chart-tools">
+                  {badge && <span className={`freshness-badge is-${badge.tone}`}>{badge.text}</span>}
+                  <div className="ph-periods" aria-label="Grafik zaman aralığı">
+                    {periods.map((period) => (
+                      <button
+                        key={period.value}
+                        type="button"
+                        aria-pressed={horizon === period.value}
+                        className={horizon === period.value ? 'is-active' : undefined}
+                        onClick={() => onHorizonChange(period.value)}
+                      >
+                        {period.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <p className={`explore-price ${flash}`}>{money(Number(selected.price.amount), selected.price.currency)} <small className={Number(selected.changePercent) >= 0 ? 'positive' : 'negative'}>{percent(Number(selected.changePercent))}</small></p>
-              <PriceChart key={selected.asset.id} name={selected.asset.symbol} series={selected.series} />
+              <p className={`explore-price ${flash}`}>{formatMoney(Number(selected.price.amount), selected.price.currency)} <small className={Number(selected.changePercent) >= 0 ? 'positive' : 'negative'}>{percent(Number(selected.changePercent))}</small></p>
+              <PriceChart key={`${selected.asset.id}-${horizon}`} name={selected.asset.symbol} series={selected.series} />
               <dl className="explore-stats">
                 {exploreQuoteStats(selected).map((row) => (
                   <div key={row.label}>

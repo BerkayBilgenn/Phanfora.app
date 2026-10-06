@@ -470,9 +470,39 @@ body { background: #031723; color: #e8f1ff; font-family: Arial, Helvetica, ui-sa
 .cockpit-data-alert button { margin-left: 10px; padding: 4px 8px; border: 1px solid currentColor; border-radius: 5px; background: transparent; color: inherit; cursor: pointer; }
 .workspace-page { max-width: 1240px; min-height: calc(100vh - 72px); margin: 0 auto; padding: clamp(28px, 3.5vw, 55px) clamp(16px, 3vw, 42px) 70px; }
 .workspace-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+.workspace-header.is-radar { align-items: flex-start; }
+.workspace-header.is-radar > div:first-child { flex: 1; min-width: 0; }
 .workspace-header .eyebrow { margin-bottom: 8px; }
 .workspace-header h1 { margin: 0; font-size: clamp(32px, 3.8vw, 52px); line-height: 1.05; letter-spacing: -.035em; }
-.workspace-header p:last-child { max-width: 66ch; margin: 10px 0 0; color: #a8c2d9; }
+.workspace-header p.workspace-header-sub { max-width: 66ch; margin: 10px 0 0; color: #a8c2d9; }
+.workspace-radar-leaders { margin-top: 22px; width: min(100%, 52rem); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.workspace-radar-leaders h2 { margin: 0 0 8px; color: #7fddc7; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.workspace-radar-leader { min-height: 44px; padding: 8px 0; border-bottom: 1px solid #153d4e; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.workspace-radar-leader span { min-width: 0; display: grid; gap: 2px; }
+.workspace-radar-leader strong { font-size: 14px; }
+.workspace-radar-leader small { color: #8facbf; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-radar-leader b { font-variant-numeric: tabular-nums; font-size: 14px; }
+.workspace-radar-leader b.positive { color: #1fe2b3; }
+.workspace-radar-leader b.negative { color: #f07580; }
+.workspace-radar-leader-empty { margin: 8px 0 0; color: #8facbf; font-size: 12px; }
+.workspace-radar-dock { width: min(320px, 100%); display: grid; justify-items: stretch; gap: 10px; }
+.workspace-radar { margin: 0; padding: 10px 10px 8px; border: 1px solid #1c495b; border-radius: 9px; background: linear-gradient(145deg, #082231, #061c29); box-shadow: inset 0 0 24px #0b3d3a55; }
+.workspace-radar h2 { margin: 0 0 8px; color: #7fddc7; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.workspace-radar figcaption { margin: 6px 2px 0; color: #7fa3b8; font-size: 11px; letter-spacing: .04em; }
+.workspace-radar-stage { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 6px; background: radial-gradient(circle at 50% 50%, #0a3a42, #061c29 72%); }
+.workspace-radar-stage canvas, .workspace-radar-stage svg { width: 100%; height: 100%; display: block; }
+.workspace-radar-stage canvas { position: absolute; inset: 0; opacity: 0; }
+.workspace-radar-stage canvas.is-live { opacity: 1; }
+.workspace-radar-ring { fill: none; stroke: #1a7a86; stroke-width: 1; opacity: .8; }
+.workspace-radar-tick { stroke: #39c9b0; stroke-width: 1; opacity: .7; }
+.workspace-radar-cross { stroke: #18bd9d; stroke-width: 1; opacity: .28; }
+.workspace-radar-beam { fill: #1bd9aa; opacity: .22; transform-origin: 100px 100px; transform-box: view-box; animation: radar-sweep 2.4s linear infinite; }
+.workspace-radar-beam.is-trail { opacity: .1; }
+.workspace-radar-label { fill: #d7f6ee; font-size: 7px; font-weight: 700; letter-spacing: .02em; }
+.workspace-radar-dock .workspace-refresh { justify-self: end; }
+@media (prefers-reduced-motion: reduce) {
+  .workspace-radar-beam { animation: none; }
+}
 .workspace-refresh, .workspace-action, .workspace-report-actions button { border: 1px solid #245162; border-radius: 7px; background: #092534; color: #c5d9eb; cursor: pointer; }
 .workspace-refresh { min-height: 40px; padding: 0 12px; display: inline-flex; align-items: center; gap: 8px; }
 .workspace-refresh:hover, .workspace-action:hover, .workspace-report-actions button:hover { border-color: #28d9b1; color: #2be4b8; }
@@ -527,7 +557,7 @@ body { background: #031723; color: #e8f1ff; font-family: Arial, Helvetica, ui-sa
 .workspace-report-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .workspace-analysis-form { padding-top: 20px; }
 .workspace-analysis-form .analysis-fields, .workspace-analysis-form .analysis-panel { max-width: 800px; }
-@media (max-width: 700px) { .workspace-header { align-items: start; } .workspace-header h1 { font-size: 34px; } .workspace-row { flex-wrap: wrap; gap: 8px; } .workspace-row .workspace-number { margin-left: auto; } .workspace-kpis { grid-template-columns: 1fr; } .workspace-form { padding: 16px; } .workspace-form label { min-width: 100%; } }
+@media (max-width: 700px) { .workspace-header { align-items: start; flex-wrap: wrap; } .workspace-header h1 { font-size: 34px; } .workspace-radar-dock { width: 100%; } .workspace-radar-leaders { grid-template-columns: 1fr; } .workspace-row { flex-wrap: wrap; gap: 8px; } .workspace-row .workspace-number { margin-left: auto; } .workspace-kpis { grid-template-columns: 1fr; } .workspace-form { padding: 16px; } .workspace-form label { min-width: 100%; } }
 @media (max-width: 800px) {
   .mobile-nav { grid-template-columns: repeat(5, 1fr); }
   .mobile-nav button { min-width: 0; min-height: 52px; padding: 0; border: 0; background: transparent; color: #aec9df; display: grid; place-items: center; align-content: center; gap: 2px; cursor: pointer; }
@@ -679,6 +709,7 @@ body { background: #031723; color: #e8f1ff; font-family: Arial, Helvetica, ui-sa
 .explore-chart-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .explore-chart-head h2 { margin: 0; font-size: 28px; }
 .explore-chart-head p { margin: 6px 0 0; color: #9bb8cf; font-size: 13px; }
+.explore-chart-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .explore-price { margin: 12px 0 8px; font-size: 28px; font-variant-numeric: tabular-nums; }
 .explore-price small { margin-left: 8px; font-size: 16px; }
 .explore-row {

@@ -23,11 +23,13 @@ const ASSETS = [
 
 const INTERVAL: Record<Horizon, string> = { daily: '15m', weekly: '1h', monthly: '1d' };
 const BAR_COUNT: Record<Horizon, number> = { daily: 97, weekly: 169, monthly: 31 };
+const ORIGINS = ['https://api.binance.com', 'https://api.binance.me'] as const;
 
 export class BinanceMarketDataProvider implements MarketDataProvider {
   private readonly fetcher: typeof fetch;
   private readonly clock: () => string;
   private readonly ttlMs: number;
+  private origin: string | null = null;
   private readonly cache = new Map<Horizon, { expires: number; value: readonly MarketCandidate[] }>();
   private readonly pending = new Map<Horizon, Promise<readonly MarketCandidate[]>>();
 
@@ -72,19 +74,35 @@ export class BinanceMarketDataProvider implements MarketDataProvider {
     return candidates;
   }
 
-  private async loadAsset(asset: BinanceAsset, horizon: Horizon): Promise<MarketCandidate> {
-    const url = new URL('https://api.binance.com/api/v3/klines');
-    url.searchParams.set('symbol', asset.pair);
-    url.searchParams.set('interval', INTERVAL[horizon]);
-    url.searchParams.set('limit', String(BAR_COUNT[horizon]));
-    let response: Response;
-    try {
-      response = await this.fetcher(url, { signal: AbortSignal.timeout(8000) });
-    } catch {
-      throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+  private async klines(asset: BinanceAsset, horizon: Horizon): Promise<Response> {
+    const origins = this.origin
+      ? [this.origin, ...ORIGINS.filter((origin) => origin !== this.origin)]
+      : [...ORIGINS];
+    let limited = false;
+    for (const origin of origins) {
+      const url = new URL('/api/v3/klines', origin);
+      url.searchParams.set('symbol', asset.pair);
+      url.searchParams.set('interval', INTERVAL[horizon]);
+      url.searchParams.set('limit', String(BAR_COUNT[horizon]));
+      let response: Response;
+      try {
+        response = await this.fetcher(url, { signal: AbortSignal.timeout(8000) });
+      } catch {
+        continue;
+      }
+      if (response.status === 429) {
+        limited = true;
+        continue;
+      }
+      if (!response.ok) continue;
+      this.origin = origin;
+      return response;
     }
-    if (response.status === 429) throw new MarketDataError('MARKET_DATA_RATE_LIMITED');
-    if (!response.ok) throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
+    throw new MarketDataError(limited ? 'MARKET_DATA_RATE_LIMITED' : 'MARKET_DATA_UNAVAILABLE');
+  }
+
+  private async loadAsset(asset: BinanceAsset, horizon: Horizon): Promise<MarketCandidate> {
+    const response = await this.klines(asset, horizon);
     const payload = await response.json() as unknown;
     if (!Array.isArray(payload) || payload.length < 4) throw new MarketDataError('MARKET_DATA_UNAVAILABLE');
     const { pair: _pair, ...canonical } = asset;

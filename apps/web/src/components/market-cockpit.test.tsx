@@ -28,6 +28,20 @@ describe('MarketCockpit', () => {
     expect(screen.queryByText('NVDA')).not.toBeInTheDocument();
   });
 
+  it('renders Binance USDT quotes without crashing Intl currency formatting', async () => {
+    const bnb = {
+      ...candidate,
+      asset: { ...candidate.asset, id: 'crypto:bnb-usdt', symbol: 'BNB', name: 'BNB', exchangeOrVenue: 'Binance', quoteCurrency: 'USDT' },
+      price: { amount: '778.5', currency: 'USDT' },
+      source: 'Binance',
+    };
+    api.fetchQuotes.mockResolvedValue({ items: [bnb], dataMode: 'public' });
+    api.fetchNews.mockResolvedValue({ items: [], updatedAt: null, stale: false, unavailableSources: [] });
+    render(<MarketCockpit />);
+    await waitFor(() => expect(screen.getAllByText(/USDT/).length).toBeGreaterThan(0));
+    expect(screen.getAllByText(/778/).length).toBeGreaterThan(0);
+  });
+
   it('shows provider failure rather than a made-up quote', async () => {
     api.fetchQuotes.mockRejectedValue(new Error('Veri kaynağına ulaşılamadı'));
     api.fetchNews.mockResolvedValue({ items: [], updatedAt: null, stale: false, unavailableSources: [] });
