@@ -20,6 +20,12 @@ const ASSETS = [
   { id: 'stock:eregl-xist', symbol: 'EREGL', name: 'Ereğli Demir Çelik', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high', yahooSymbol: 'EREGL.IS' },
   { id: 'stock:bimas-xist', symbol: 'BIMAS', name: 'BİM Birleşik Mağazalar', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high', yahooSymbol: 'BIMAS.IS' },
   { id: 'stock:sise-xist', symbol: 'SISE', name: 'Şişecam', assetClass: 'stock', exchangeOrVenue: 'Borsa İstanbul', quoteCurrency: 'TRY', liquidityTier: 'high', yahooSymbol: 'SISE.IS' },
+  { id: 'crypto:btc-usd', symbol: 'BTC', name: 'Bitcoin', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high', yahooSymbol: 'BTC-USD' },
+  { id: 'crypto:eth-usd', symbol: 'ETH', name: 'Ethereum', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high', yahooSymbol: 'ETH-USD' },
+  { id: 'crypto:sol-usd', symbol: 'SOL', name: 'Solana', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high', yahooSymbol: 'SOL-USD' },
+  { id: 'crypto:xrp-usd', symbol: 'XRP', name: 'XRP', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high', yahooSymbol: 'XRP-USD' },
+  { id: 'crypto:ada-usd', symbol: 'ADA', name: 'Cardano', assetClass: 'crypto', exchangeOrVenue: 'Global crypto', quoteCurrency: 'USD', liquidityTier: 'high', yahooSymbol: 'ADA-USD' },
+  { id: 'forex:eur-usd', symbol: 'EUR/USD', name: 'Euro / US Dollar', assetClass: 'forex', exchangeOrVenue: 'Global FX', quoteCurrency: 'USD', liquidityTier: 'high', yahooSymbol: 'EURUSD=X' },
 ] as const satisfies readonly YahooAsset[];
 
 const REQUEST: Record<Horizon, { interval: string; range: string }> = {

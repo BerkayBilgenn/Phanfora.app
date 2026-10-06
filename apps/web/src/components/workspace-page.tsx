@@ -1,20 +1,23 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type { AnalysisInput, AnalysisResult, CurrencyDefinition, MarketCandidate } from '@phanfora/domain';
+import type { AnalysisInput, AnalysisResult, CurrencyDefinition, Horizon, MarketCandidate } from '@phanfora/domain';
 import { AnalysisPanel } from './analysis-wizard';
 import { AssetLogoBadge } from './asset-logo';
 import { Icon } from './cockpit-icons';
 import { ExploreCockpit } from './explore-cockpit';
 import { createAnalysis, fetchCurrencies } from '../lib/api';
 import { useMarket } from '../lib/use-market';
+import { formatMoney } from '../lib/format-money';
 import { freshnessBadge } from '../lib/freshness-label';
+import { MarketRadar } from './market-radar';
+import { radarLeaders } from '../lib/radar-plot';
 import { addHolding, addWatch, evaluateAlerts, parseWorkspace, saveAnalysis, saveWorkspace, subscribeWorkspace, workspaceSnapshot, type Workspace } from '../lib/workspace';
 
 type Section = 'markets' | 'radar' | 'analyses' | 'portfolio' | 'watchlist' | 'alerts' | 'reports' | 'settings';
 const metadata: Record<Section, { eyebrow: string; title: string; subtitle: string }> = {
   markets: { eyebrow: 'Piyasa verisi', title: 'Piyasalar', subtitle: 'Kaynağı ve gözlem zamanı doğrulanmış varlık fiyatları.' },
-  radar: { eyebrow: 'Piyasa taraması', title: 'Radar', subtitle: 'Bağlı veri kaynağındaki varlıkların fiyat ve gösterge özeti.' },
+  radar: { eyebrow: 'Piyasa taraması', title: 'Piyasa haritası', subtitle: 'Bağlı veri kaynağındaki varlıkların fiyat ve gösterge özeti.' },
   analyses: { eyebrow: 'Karar arşivi', title: 'Analizler', subtitle: 'Oluşturduğun analizler, hesaplandıkları andaki verilerle saklanır.' },
   portfolio: { eyebrow: 'Kişisel kayıtlar', title: 'Portföy', subtitle: 'Kendi pozisyonlarını ekle; güncel fiyat varsa gerçekleşmemiş farkı izle.' },
   watchlist: { eyebrow: 'Kişisel kayıtlar', title: 'Takip Listesi', subtitle: 'İzlemek istediğin varlıkları ekle ve fiyatlarını takip et.' },
@@ -23,11 +26,7 @@ const metadata: Record<Section, { eyebrow: string; title: string; subtitle: stri
   settings: { eyebrow: 'Tercihler', title: 'Ayarlar', subtitle: 'Analiz varsayılanlarını ve yenileme sıklığını belirle.' },
 };
 function money(value: number, currency = 'USD') {
-  try {
-    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: value < 2 ? 4 : 2 }).format(value);
-  } catch {
-    return `${value.toLocaleString('tr-TR', { maximumFractionDigits: value < 2 ? 4 : 2 })} ${currency}`;
-  }
+  return formatMoney(value, currency);
 }
 function percent(value: number) { return `${value >= 0 ? '+' : ''}${value.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}%`; }
 function date(value: string) { return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Istanbul' }).format(new Date(value)); }
@@ -54,6 +53,31 @@ function Status({ error, loading, items, refresh }: { error: string; loading: bo
   if (!items.length) return <div className="workspace-status">Bu kaynakta gösterilebilecek varlık bulunamadı.</div>;
   return null;
 }
+function RadarLeaders({ items }: { items: readonly MarketCandidate[] }) {
+  if (!items.length) return null;
+  const { gainers, losers } = radarLeaders(items);
+  const column = (title: string, rows: readonly MarketCandidate[], empty: string, tone: 'positive' | 'negative') => (
+    <div>
+      <h2>{title}</h2>
+      {!rows.length && <p className="workspace-radar-leader-empty">{empty}</p>}
+      {rows.map((item) => (
+        <div className="workspace-radar-leader" key={item.asset.id}>
+          <span>
+            <strong>{item.asset.symbol}</strong>
+            <small>{item.asset.name}</small>
+          </span>
+          <b className={tone}>{percent(Number(item.changePercent))}</b>
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <div className="workspace-radar-leaders">
+      {column('Haftalık yükselenler', gainers, 'Bu tarama döneminde yükselen yok.', 'positive')}
+      {column('Haftalık düşenler', losers, 'Bu tarama döneminde düşen yok.', 'negative')}
+    </div>
+  );
+}
 function AnalysisRunner({ onResult, items, settings }: { onResult: (result: AnalysisResult) => void; items: MarketCandidate[]; settings: Workspace['settings'] }) {
   const [currencies, setCurrencies] = useState<CurrencyDefinition[]>([{ code: 'TRY', name: 'Türk Lirası', symbol: '₺', minorUnits: 2 }, { code: 'USD', name: 'ABD Doları', symbol: '$', minorUnits: 2 }]);
   const [busy, setBusy] = useState(false);
@@ -77,8 +101,10 @@ export function WorkspacePage({ section }: { section: Section }) {
   const [direction, setDirection] = useState<'above' | 'below'>('above');
   const [formError, setFormError] = useState('');
   const [clockReady, setClockReady] = useState(false);
+  const [chartHorizon, setChartHorizon] = useState<Horizon>('daily');
   useEffect(() => { setClockReady(true); }, []);
-  const market = useMarket(section === 'radar' ? 'weekly' : workspace.settings.horizon, workspace.settings.refreshSeconds * 1000);
+  const marketHorizon = section === 'radar' ? 'weekly' : section === 'markets' ? chartHorizon : workspace.settings.horizon;
+  const market = useMarket(marketHorizon, workspace.settings.refreshSeconds * 1000);
   const quotes = market.items;
   const byId = useMemo(() => new Map(quotes.map((item) => [item.asset.id, item])), [quotes]);
   function commit(next: Workspace) { saveWorkspace(next); }
@@ -86,10 +112,25 @@ export function WorkspacePage({ section }: { section: Section }) {
   const alertHits = evaluateAlerts(workspace, quotes.map((item) => ({ assetId: item.asset.id, price: Number(item.price.amount) })));
   const info = metadata[section];
   return <div className="workspace-page">
-    <header className="workspace-header"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.subtitle}</p></div><button type="button" className="workspace-refresh" onClick={() => void market.refresh()}><Icon name="pulse" size={16} /> Yenile</button></header>
+    <header className={`workspace-header${section === 'radar' ? ' is-radar' : ''}`}>
+      <div>
+        <p className="eyebrow">{info.eyebrow}</p>
+        <h1>{info.title}</h1>
+        <p className="workspace-header-sub">{info.subtitle}</p>
+        {section === 'radar' && <RadarLeaders items={quotes} />}
+      </div>
+      {section === 'radar' ? (
+        <div className="workspace-radar-dock">
+          <MarketRadar items={quotes} />
+          <button type="button" className="workspace-refresh" onClick={() => void market.refresh()}><Icon name="pulse" size={16} /> Yenile</button>
+        </div>
+      ) : (
+        <button type="button" className="workspace-refresh" onClick={() => void market.refresh()}><Icon name="pulse" size={16} /> Yenile</button>
+      )}
+    </header>
     <div className="workspace-source"><span className={market.error ? 'source-dot is-offline' : 'source-dot'} />{market.error ? 'Bağlantı yok' : market.loading ? 'Bağlanıyor' : quotes.length ? `${[...new Set(quotes.map((item) => item.source))].join(' + ')}` : 'Kaynak yok'}<span>·</span>{quotes.length ? `${quotes.length} varlık` : 'Fiyat yok'}{clockReady && market.updatedAt && <><span>·</span> Son sorgu {date(market.updatedAt)}</>}</div>
     {section !== 'settings' && section !== 'markets' && <Status {...market} />}
-    {section === 'markets' && <ExploreCockpit items={quotes} loading={market.loading} error={market.error} onRefresh={() => void market.refresh()} watchlist={workspace.watchlist} onWatch={(id) => commit(addWatch(workspace, id))} />}
+    {section === 'markets' && <ExploreCockpit items={quotes} loading={market.loading} error={market.error} onRefresh={() => void market.refresh()} watchlist={workspace.watchlist} onWatch={(id) => commit(addWatch(workspace, id))} horizon={chartHorizon} onHorizonChange={setChartHorizon} />}
     {section === 'radar' && <><div className="workspace-kpis"><div><span>Tarama kapsamı</span><strong>{quotes.length}</strong><small>yalnızca veri sağlayıcısındaki varlıklar</small></div><div><span>Yükselen</span><strong>{quotes.filter((item) => Number(item.changePercent) > 0).length}</strong><small>haftalık fiyat değişimi</small></div><div><span>Düşen</span><strong>{quotes.filter((item) => Number(item.changePercent) < 0).length}</strong><small>haftalık fiyat değişimi</small></div></div><div className="workspace-panel"><div className="workspace-panel-heading"><h2>Fiyat değişimine göre</h2><span>Haftalık seri</span></div>{[...quotes].sort((a,b) => Number(b.changePercent) - Number(a.changePercent)).map((item) => quoteRow(item, <span key="trend" className="workspace-small">Trend {item.dimensions.trend}/100</span>))}</div><div className="workspace-panel"><div className="workspace-panel-heading"><h2>Yeni analiz</h2></div><AnalysisRunner items={quotes} settings={workspace.settings} onResult={(result) => commit(saveAnalysis(workspace, result))} /></div></>}
     {section === 'analyses' && <>
       <div className="workspace-panel">

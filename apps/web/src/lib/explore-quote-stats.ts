@@ -1,18 +1,11 @@
 import type { MarketCandidate } from '@phanfora/domain';
+import { formatMoney } from './format-money';
 
 export type QuoteStat = { label: string; value: string };
 
 function finite(value: unknown) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function money(value: number, currency: string) {
-  try {
-    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: value < 2 ? 4 : 2 }).format(value);
-  } catch {
-    return `${value.toLocaleString('tr-TR', { maximumFractionDigits: value < 2 ? 4 : 2 })} ${currency}`;
-  }
 }
 
 function seriesRange(item: MarketCandidate) {
@@ -33,8 +26,8 @@ export function exploreQuoteStats(item: MarketCandidate): QuoteStat[] {
   const rows: QuoteStat[] = [];
   const range = seriesRange(item);
   if (range) {
-    rows.push({ label: 'Yüksek', value: money(range.high, item.asset.quoteCurrency) });
-    rows.push({ label: 'Düşük', value: money(range.low, item.asset.quoteCurrency) });
+    rows.push({ label: 'Yüksek', value: formatMoney(range.high, item.asset.quoteCurrency) });
+    rows.push({ label: 'Düşük', value: formatMoney(range.low, item.asset.quoteCurrency) });
   }
   const volume = finite(item.series.at(-1)?.volume);
   if (volume != null && volume > 0) {

@@ -35,6 +35,24 @@ describe('BinanceMarketDataProvider', () => {
     expect(bnb?.changePercent).toBe('5.8824');
   });
 
+  it('falls back to api.binance.me when api.binance.com cannot be reached', async () => {
+    const fetcher = vi.fn(async (input: URL | RequestInfo) => {
+      const url = new URL(String(input));
+      if (url.hostname === 'api.binance.com') throw new Error('ECONNRESET');
+      expect(url.hostname).toBe('api.binance.me');
+      return new Response(JSON.stringify(klines), { status: 200 });
+    });
+    const provider = new BinanceMarketDataProvider({
+      fetch: fetcher as typeof fetch,
+      clock: () => '2026-05-28T08:20:00.000Z',
+    });
+    const result = await provider.getCandidates('daily');
+    const bnb = result.find((item) => item.asset.symbol === 'BNB');
+    expect(bnb?.price.amount).toBe('108');
+    expect(bnb?.source).toBe('Binance');
+    expect(fetcher.mock.calls.some(([input]) => new URL(String(input)).hostname === 'api.binance.me')).toBe(true);
+  });
+
   it('rejects inverted candles instead of inventing a close', async () => {
     const provider = new BinanceMarketDataProvider({
       fetch: async () => new Response(JSON.stringify([[1, '10', '9', '8', '10', '1']]), { status: 200 }),

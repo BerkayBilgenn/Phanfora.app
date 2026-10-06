@@ -16,6 +16,7 @@ import {
   workspaceSnapshot,
 } from "../lib/workspace";
 import { formatDecimal } from "./cockpit-data";
+import { formatMoney } from "../lib/format-money";
 import { AssetLogo, assetLogoUrl } from "./asset-logo";
 import { Icon } from "./cockpit-icons";
 import { MarketOverviewChart, palette } from "./market-overview-chart";
@@ -43,11 +44,7 @@ const classNames: Record<AssetClass, string> = {
 };
 const suggestedSymbols = ["DOGE", "AVAX", "LINK", "DOT", "LTC", "BCH", "UNI", "AAVE", "ARB", "OP", "PEPE", "SHIB"];
 function price(item: MarketCandidate) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: item.price.currency,
-    maximumFractionDigits: Number(item.price.amount) < 2 ? 4 : 2,
-  }).format(Number(item.price.amount));
+  return formatMoney(Number(item.price.amount), item.price.currency);
 }
 function percent(value: number, digits = 2) {
   return `${value >= 0 ? "+" : ""}${formatDecimal(value, digits)}%`;
